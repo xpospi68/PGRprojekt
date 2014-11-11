@@ -58,7 +58,7 @@ unsigned char playerIndicies[] = {
 };
 
 /*
-funkce nacita data levelu
+Funkce nacita data levelu
 
 Soubory levelu maji format (viz. level1.dat):
 x
@@ -75,6 +75,9 @@ Kde:
 x - znaci pocet zaznamu v souboru - diky tomu lze hned snadno alokovat pamet
 y - znaci vysku podlahy v danem bode
 z - znaci vysku stropu v danem bode, oboje se pocita od spodu od urovne 0
+
+V souboru jsou teda ulozeny pouze vysky a k tomu se prave v teto funkci dopocitava i "podlaha" a "strop" aby
+jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon trosku zajimave.
 */
 int loadLevel(int level){
 	FILE *file;
