@@ -1,0 +1,8 @@
+/proj/Debug
+/proj/Release
+/proj/proj
+/GL
+/glm
+GLee.c
+*.o
+*.exe

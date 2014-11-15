@@ -1,7 +1,7 @@
 /**
 	PGR Projekt: hra01b - Jednoklavesova hra s pouzitim OpenGL
 
-	Datum: 10. 11. 2014
+	Datum: 15. 11. 2014
 
 	Prihlaseni:
 		Sokova Veronika, Bc.	xsokov00@stud.fit.vutbr.cz
@@ -11,14 +11,18 @@
 */
 
 #include "pgr.h"
+#include "map.hpp"
+
+#include <iostream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define TOP_BORDER 15.0
-#define DEPTH -3.0
-#define PLAYER_DEPTH -1.0
+#define TOP_BORDER 15.0f
+#define LEFT_BORDER -10.0f
+#define DEPTH -3.0f
+#define PLAYER_DEPTH -1.0f
 
 using namespace std;
 
@@ -30,28 +34,52 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-// position of player
-glm::vec3 position(0, 7, -1);
+typedef struct {
+	glm::vec3 position; // position of player
+	int best;     // best score (position.x)
+	bool running; // indicates if player is true == running, false == falling
+	bool blocked;
+	bool gravity; // true == normal gravity, false == inverted gravity
+} Player;
+
+glm::vec3 startPosition = glm::vec3(0, map[0][0].floor+0.5, -1);
+Player p;
+
+glm::vec3 startCameraPosition(0, -7.5, -15); 
+glm::vec3 cameraPosition; // pozice kamery
+
+float speed = 0.05f; // rychlost hry
+
+int level = -1;
 
 // pocet zaznamu v souboru
-int numberOfRecords = 0;
+int numberOfRecords = NUMBER_OF_RECORDS;//0;
 
 typedef struct {
 	float color[3];
 	float position[3];
 } Point;
 
-// vrcholy pro "mistnost" a pro hrace (zatim jen cerveny ctverec)
-Point * roomVertices;
+
+// vrcholy pro "mistnost"
+Point * roomVertices  = NULL;
+
+// vrcholy pro hrace (zatim ctverec) => sprite
+// animacia behu - running (!blocked)
+// animacia tlacenia (alebo 1 frame) - blocked
+// animacia skakania - !running s x
+// bez animacie / padanie - !running bez x
+
+// !!! koli otacaniu lepsie mat osovu sumernost
 Point playerVertices[4] = { 
-	{ { 1.0, 0.0, 0.0 }, { 0.0, 0.0, PLAYER_DEPTH } },
-	{ { 1.0, 0.0, 0.0 }, { 0.0, 1.0, PLAYER_DEPTH } },
-	{ { 1.0, 0.0, 0.0 }, { 1.0, 1.0, PLAYER_DEPTH } },
-	{ { 1.0, 0.0, 0.0 }, { 1.0, 0.0, PLAYER_DEPTH } }
+	{ { 1.0, 0.0, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } },
+	{ { 1.0, 0.0, 0.0 }, { -1.0,  0.5, PLAYER_DEPTH } },
+	{ { 0.0, 0.0, 1.0 }, {  0.0,  0.5, PLAYER_DEPTH } },
+	{ { 0.0, 1.0, 0.0 }, {  0.0, -0.5, PLAYER_DEPTH } }
 };
 
 // indicie k temto vrcholum
-unsigned char * roomIndicies;
+unsigned char * roomIndicies = NULL;
 unsigned char playerIndicies[] = { 
 	0, 2, 1,
 	0, 3, 2
@@ -59,6 +87,8 @@ unsigned char playerIndicies[] = {
 
 /*
 Funkce nacita data levelu
+ 
+!!! prepotreby kolizie musim mat mapu niekde hmatatelne ulozenu 
 
 Soubory levelu maji format (viz. level1.dat):
 x
@@ -79,13 +109,13 @@ z - znaci vysku stropu v danem bode, oboje se pocita od spodu od urovne 0
 V souboru jsou teda ulozeny pouze vysky a k tomu se prave v teto funkci dopocitava i "podlaha" a "strop" aby
 jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon trosku zajimave.
 */
-int loadLevel(int level){
-	FILE *file;
+/**int*/void loadLevel(int level){
+///	FILE *file;
 	int floor, ceiling, floor_last = - 1, ceiling_last = -1;
 	int j = 0;
-
+/**
 	// TODO: dodelat aby to bralo nazev souboru podle parametru level
-	if ((file = fopen("../../level1.dat", "r")) == NULL){
+	if ((file = fopen("level1.dat", "r")) == NULL){
 		cout << "ERROR: opening file" << endl;
 		return EXIT_FAILURE;
 	}
@@ -95,9 +125,9 @@ int loadLevel(int level){
 		cout << "ERROR: reading file" << endl;
 		return EXIT_FAILURE;
 	}
-
+*/
 	// alokace pameti..
-	roomVertices = (Point *) malloc(16 * numberOfRecords * sizeof(Point));
+/**	roomVertices = (Point *) malloc(16 * numberOfRecords * sizeof(Point));
 	if (roomVertices == NULL){
 		cout << "ERROR: out of memory" << endl;
 		return EXIT_FAILURE;
@@ -108,41 +138,48 @@ int loadLevel(int level){
 		cout << "ERROR: out of memory" << endl;
 		return EXIT_FAILURE;
 	}
+*/
+	roomVertices = new Point[16 * NUMBER_OF_RECORDS];
+	roomIndicies = new unsigned char[24 * NUMBER_OF_RECORDS];
 
 	// cyklus pro kazdy zaznam v souboru
 	// v kazdem prochodu se vytvori 2 trojuhelniky (obdelnik) pro dolni stenu, 2 pro horni stenu,
 	// 2 pro podlahu a 2 pro strop
 	// sice se takto vytvari vice trojuhelniku nez je nezbytne nutne, ale aspon je to jednoduche
-	for (int i = 0; i < numberOfRecords; i++){
+/**	for (int i = 0; i < numberOfRecords; i++){
 		if (fscanf(file, "%i,%i", &floor, &ceiling) <= 0){
 			cout << "ERROR: reading file" << endl;
 			return EXIT_FAILURE;
 		}
+*/
+	for (int i = 0; i < NUMBER_OF_RECORDS; i++){
+		floor = map[level][i].floor;
+		ceiling = map[level][i].ceiling;
 
 		// vytovrim 16 vrcholu pro kazdy nacteny zaznam (8 trojuhelniku)
 		// dolni stena
 		roomVertices[16 * i] = { { 1.0, 1.0, 1.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
 		roomVertices[16 * i + 1] = { { 1.0, 1.0, 1.0 }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
-		roomVertices[16 * i + 2] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0, (float)floor, 0.0 } }; // vpravo nahore
-		roomVertices[16 * i + 3] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0, 0.0, 0.0 } }; // vpravo dole
+		roomVertices[16 * i + 2] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
+		roomVertices[16 * i + 3] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
 
 		// hodni stena
 		roomVertices[16 * i + 4] = { { 1.0, 1.0, 1.0 }, { (float)i, (float)ceiling, 0.0 } };
 		roomVertices[16 * i + 5] = { { 1.0, 1.0, 1.0 }, { (float)i, TOP_BORDER, 0.0 } };
-		roomVertices[16 * i + 6] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0, TOP_BORDER, 0.0 } };
-		roomVertices[16 * i + 7] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0, (float)ceiling, 0.0 } };
+		roomVertices[16 * i + 6] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
+		roomVertices[16 * i + 7] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// podlaha
 		roomVertices[16 * i + 8] = { { 0.5, 0.5, 0.5 }, { (float)i, (float)floor, 0.0 } };
 		roomVertices[16 * i + 9] = { { 0.5, 0.5, 0.5 }, { (float)i, (float)floor, DEPTH } };
-		roomVertices[16 * i + 10] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0, (float)floor, DEPTH } };
-		roomVertices[16 * i + 11] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0, (float)floor, 0.0 } };
+		roomVertices[16 * i + 10] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)floor, DEPTH } };
+		roomVertices[16 * i + 11] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)floor, 0.0 } };
 
 		// strop
 		roomVertices[16 * i + 12] = { { 0.5, 0.5, 0.5 }, { (float)i, (float)ceiling, 0.0 } };
 		roomVertices[16 * i + 13] = { { 0.5, 0.5, 0.5 }, { (float)i, (float)ceiling, DEPTH } };
-		roomVertices[16 * i + 14] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0, (float)ceiling, DEPTH } };
-		roomVertices[16 * i + 15] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0, (float)ceiling, 0.0 } };
+		roomVertices[16 * i + 14] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
+		roomVertices[16 * i + 15] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// 24 indicii pro kazdy zaznam (8 trojuhelniku)
 		roomIndicies[j++] = (unsigned char) 16 * i;
@@ -183,17 +220,76 @@ int loadLevel(int level){
 		ceiling_last = ceiling;
 	}
 
-	fclose(file);
+///	fclose(file);
+///	return 0;
+}
+
+// uvolneni alokovanych zdroju
+void freeAll(){
+///	free(roomVertices);
+///	if (roomIndicies != NULL)
+///		free(roomIndicies);
+	if (roomVertices != nullptr)
+		delete [] roomVertices;
+	if (roomIndicies != nullptr)
+		delete [] roomIndicies;
+}
+
+// zahajenie hry, nastavenie pozicie hraca, kamery a urovne
+void initGame() {
+	p = {startPosition, 0, true, false, true};
+	cameraPosition = startCameraPosition;
+	if (level == 0) // vraciame sa, je nacitany
+		return;
+
+	if (level != -1) // nie je zaciatok hry
+		freeAll();
+
+	level = 0;
+	loadLevel(0);
+}
+
+// logika hraca
+void collisionDetection() {
+	Column actual = map[level][(int)trunc(p.position.x-0.5)];
+	Column follow = map[level][(int)ceil(p.position.x-0.99f)];
+
+	//blokovanie v pohybe
+	if ((follow.floor > p.position.y - 0.445 ) || (follow.ceiling < p.position.y + 0.445))
+		p.blocked = true;
+	else
+		p.blocked = false;
+
+
+	// behanie == poda pod nohami, padanie == volny priestor		
+	if (p.gravity && (actual.floor < p.position.y - 0.495)) {
+		p.running = false; // falling
+		p.position.y -= speed;
+	} else if (p.gravity) {
+		p.running = true;
+	}
+
+	if (!p.gravity && (actual.ceiling > p.position.y + 0.495)) {
+		p.running = false;
+		p.position.y += speed;
+	} else if (!p.gravity) {
+		p.running = true;
+	}
+		
+	// posun hrace proti smeru kamery => hrac vlastne smerove stoji na miste
+	if (!p.blocked) p.position.x += speed;
+
+	cout << "cam-x: "<< cameraPosition.x << ", x: " << p.position.x 
+	     << ", y: " << p.position.y << "("
+	     << actual.floor << ", " << actual.ceiling 
+	     << ")(" << follow.floor << ", " << follow.ceiling 
+	     << ")"  << endl;
 }
 
 GLuint VBO, EBO, playerVBO, playerEBO;
 
 int width, height; // rozmery okna
 float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
-bool running = 0; // indicates if game is running 
-bool gravity = 0; // 0 == normal gravity, 1 == inverted gravity
-glm::vec3 cameraPosition(0, -7, -15); // pozice kamery
-float speed = 0.05f; // rychlost hry
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -250,16 +346,18 @@ void onWindowRedraw(){
     glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	// pohyb hrace
-	if (running){
-		//TODO: dodelat detekci kolize		
 
-		if (gravity) position.y -= speed; else position.y += speed;
-		position.x += speed; // posun hrace proti smeru kamery => hrac vlastne smerove stoji na miste
+	collisionDetection();
+	
+	// hra konci, ked vyjde z obrazovky
+	if (p.position.y > TOP_BORDER || p.position.y < 0 || cameraPosition.x + p.position.x < LEFT_BORDER)
+	{
+		if (p.position.x > p.best) p.best = p.position.x;
+		initGame();
 	}
 
-	// pohyb kamery
-	if (running) cameraPosition.x -= speed;
+	// pohyb kamery => vzdy
+	cameraPosition.x -= speed;
 
 	// matice vp = neobsahuje modelovou matici, proto se v ni neprojevi posunuti objektu, nasobi se s ni pouze "mistnost"
 	// tenhle kod mam z cvik, nechapu proc tu nejsou normalni model, view a perspective matice ale je to tu takto vse v jednom :(
@@ -278,8 +376,8 @@ void onWindowRedraw(){
 	glEnableVertexAttribArray(positionAttrib);
 	glEnableVertexAttribArray(colorAttrib);
 
-	// "nasobeni" modelovou matici
-	glm::mat4 mvp = glm::translate(vp,position);
+	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
+	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity)? -1: 1), 1));
 
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp));
 
@@ -290,7 +388,7 @@ void onWindowRedraw(){
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, NULL);
 
-	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
+    glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
 
 	// vykresleni mistnosti
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
@@ -313,9 +411,12 @@ void onKeyDown(SDLKey key, Uint16 /*mod*/)
     switch(key) {
         case SDLK_ESCAPE : quit(); return;
 		case SDLK_x: 
-			if (!running) running = true;
-			if (running) gravity = !gravity;
+			if (p.running) {	
+				p.running = false;
+				p.gravity = !p.gravity;
+			}
 			break;
+		case SDLK_a: initGame(); break; // just for testing !!!
         default : return;
     }
     redraw();
@@ -358,26 +459,33 @@ void onMouseUp(Uint8 /*button*/, unsigned /*x*/, unsigned /*y*/)
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-// uvolneni alokovanych zdroju
-void freeAll(){
-	free(roomVertices);
-	free(roomIndicies);
-}
-
 int main(int /*argc*/, char ** /*argv*/){	
-	if (loadLevel(1) != 0){
+	/**if (loadLevel(0) != 0){
 		freeAll();
 		return EXIT_FAILURE;
+	}*/
+	
+	try {
+
+		initGame();
+
+	} catch(bad_alloc & ex) {
+		cout << "ERROR : out of memory - " <<  ex.what() << endl;
+		freeAll();
+        return EXIT_FAILURE;
 	}
 
     try {
         // Init SDL - only video subsystem will be used
         if(SDL_Init(SDL_INIT_VIDEO) < 0) throw SDL_Exception();
 
+		// meno okna, 0 ==  default ikona
+		SDL_WM_SetCaption("PGR g-switch", NULL);
+
         // Shutdown SDL when program ends
         atexit(SDL_Quit);
 
-        init(1300, 650, 24, 160, 0);
+        /* SDL_Surface * screen = */ init(800, 600, 24, 16, 8);
 
 		mainLoop(20); // delay = 20ms => 50fps 
 
