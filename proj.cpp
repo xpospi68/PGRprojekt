@@ -1,7 +1,7 @@
 /**
 	PGR Projekt: hra01b - Jednoklavesova hra s pouzitim OpenGL
 
-	Datum: 15. 11. 2014
+	Datum: 16. 11. 2014
 
 	Prihlaseni:
 		Sokova Veronika, Bc.	xsokov00@stud.fit.vutbr.cz
@@ -62,7 +62,7 @@ typedef struct {
 
 
 // vrcholy pro "mistnost"
-Point * roomVertices  = NULL;
+Point * roomVertices  = nullptr;
 
 // vrcholy pro hrace (zatim ctverec) => sprite
 // animacia behu - running (!blocked)
@@ -79,7 +79,7 @@ Point playerVertices[4] = {
 };
 
 // indicie k temto vrcholum
-unsigned char * roomIndicies = NULL;
+unsigned short * roomIndicies = nullptr;
 unsigned char playerIndicies[] = { 
 	0, 2, 1,
 	0, 3, 2
@@ -140,7 +140,7 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 	}
 */
 	roomVertices = new Point[16 * NUMBER_OF_RECORDS];
-	roomIndicies = new unsigned char[24 * NUMBER_OF_RECORDS];
+	roomIndicies = new unsigned short[24 * NUMBER_OF_RECORDS];
 
 	// cyklus pro kazdy zaznam v souboru
 	// v kazdem prochodu se vytvori 2 trojuhelniky (obdelnik) pro dolni stenu, 2 pro horni stenu,
@@ -182,33 +182,33 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 		roomVertices[16 * i + 15] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// 24 indicii pro kazdy zaznam (8 trojuhelniku)
-		roomIndicies[j++] = (unsigned char) 16 * i;
-		roomIndicies[j++] = (unsigned char) 16 * i + 2;
-		roomIndicies[j++] = (unsigned char) 16 * i + 1;
-		roomIndicies[j++] = (unsigned char) 16 * i;
-		roomIndicies[j++] = (unsigned char) 16 * i + 3;
-		roomIndicies[j++] = (unsigned char) 16 * i + 2;
+		roomIndicies[j++] = (unsigned short) 16 * i;
+		roomIndicies[j++] = (unsigned short) 16 * i + 2;
+		roomIndicies[j++] = (unsigned short) 16 * i + 1;
+		roomIndicies[j++] = (unsigned short) 16 * i;
+		roomIndicies[j++] = (unsigned short) 16 * i + 3;
+		roomIndicies[j++] = (unsigned short) 16 * i + 2;
 
-		roomIndicies[j++] = (unsigned char) 16 * i + 4;
-		roomIndicies[j++] = (unsigned char) 16 * i + 6;
-		roomIndicies[j++] = (unsigned char) 16 * i + 5;
-		roomIndicies[j++] = (unsigned char) 16 * i + 4;
-		roomIndicies[j++] = (unsigned char) 16 * i + 7;
-		roomIndicies[j++] = (unsigned char) 16 * i + 6;
+		roomIndicies[j++] = (unsigned short) 16 * i + 4;
+		roomIndicies[j++] = (unsigned short) 16 * i + 6;
+		roomIndicies[j++] = (unsigned short) 16 * i + 5;
+		roomIndicies[j++] = (unsigned short) 16 * i + 4;
+		roomIndicies[j++] = (unsigned short) 16 * i + 7;
+		roomIndicies[j++] = (unsigned short) 16 * i + 6;
 
-		roomIndicies[j++] = (unsigned char) 16 * i + 8;
-		roomIndicies[j++] = (unsigned char) 16 * i + 10;
-		roomIndicies[j++] = (unsigned char) 16 * i + 9;
-		roomIndicies[j++] = (unsigned char) 16 * i + 8;
-		roomIndicies[j++] = (unsigned char) 16 * i + 11;
-		roomIndicies[j++] = (unsigned char) 16 * i + 10;
+		roomIndicies[j++] = (unsigned short) 16 * i + 8;
+		roomIndicies[j++] = (unsigned short) 16 * i + 10;
+		roomIndicies[j++] = (unsigned short) 16 * i + 9;
+		roomIndicies[j++] = (unsigned short) 16 * i + 8;
+		roomIndicies[j++] = (unsigned short) 16 * i + 11;
+		roomIndicies[j++] = (unsigned short) 16 * i + 10;
 
-		roomIndicies[j++] = (unsigned char) 16 * i + 12;
-		roomIndicies[j++] = (unsigned char) 16 * i + 13;
-		roomIndicies[j++] = (unsigned char) 16 * i + 14;
-		roomIndicies[j++] = (unsigned char) 16 * i + 12;
-		roomIndicies[j++] = (unsigned char) 16 * i + 14;
-		roomIndicies[j++] = (unsigned char) 16 * i + 15;
+		roomIndicies[j++] = (unsigned short) 16 * i + 12;
+		roomIndicies[j++] = (unsigned short) 16 * i + 13;
+		roomIndicies[j++] = (unsigned short) 16 * i + 14;
+		roomIndicies[j++] = (unsigned short) 16 * i + 12;
+		roomIndicies[j++] = (unsigned short) 16 * i + 14;
+		roomIndicies[j++] = (unsigned short) 16 * i + 15;
 
 		if ((floor_last != -1) && (floor_last != floor)){
 			// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
@@ -329,7 +329,7 @@ void onInit(){
 
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24 * numberOfRecords * sizeof(unsigned char), roomIndicies, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24 * numberOfRecords * sizeof(unsigned short), roomIndicies, GL_STATIC_DRAW);
 
 	// zkopirujem hrace
 	glGenBuffers(1, &playerVBO);
@@ -386,7 +386,7 @@ void onWindowRedraw(){
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, color));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
-	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, NULL);
+	glDrawElements(GL_TRIANGLES, sizeof(playerIndicies)/sizeof(*playerIndicies), GL_UNSIGNED_BYTE, NULL); //6
 
     glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
 
@@ -395,7 +395,7 @@ void onWindowRedraw(){
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, color));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords, GL_UNSIGNED_BYTE, NULL);
+	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords, GL_UNSIGNED_SHORT, NULL);
 
 	SDL_GL_SwapBuffers();
 }
