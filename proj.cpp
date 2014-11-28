@@ -56,10 +56,9 @@ int level = -1;
 int numberOfRecords = NUMBER_OF_RECORDS;//0;
 
 typedef struct {
-	float color[3];
+	float texcoord[2];
 	float position[3];
 } Point;
-
 
 // vrcholy pro "mistnost"
 Point * roomVertices  = nullptr;
@@ -72,10 +71,10 @@ Point * roomVertices  = nullptr;
 
 // !!! koli otacaniu lepsie mat osovu sumernost
 Point playerVertices[4] = { 
-	{ { 1.0, 0.0, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } },
-	{ { 1.0, 0.0, 0.0 }, { -1.0,  0.5, PLAYER_DEPTH } },
-	{ { 0.0, 0.0, 1.0 }, {  0.0,  0.5, PLAYER_DEPTH } },
-	{ { 0.0, 1.0, 0.0 }, {  0.0, -0.5, PLAYER_DEPTH } }
+	{ { 0.0, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } },
+	{ { 0.0, 1.0 }, { -1.0, 0.5, PLAYER_DEPTH } },
+	{ { 1.0, 1.0 }, { 0.0, 0.5, PLAYER_DEPTH } },
+	{ { 1.0, 0.0 }, { 0.0, -0.5, PLAYER_DEPTH } }
 };
 
 // indicie k temto vrcholum
@@ -84,6 +83,8 @@ unsigned char playerIndicies[] = {
 	0, 2, 1,
 	0, 3, 2
 };
+
+
 
 /*
 Funkce nacita data levelu
@@ -157,29 +158,29 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 		ceiling = map[level][i].ceiling;
 
 		// vytovrim 16 vrcholu pro kazdy nacteny zaznam (8 trojuhelniku)
-		// dolni stena
-		roomVertices[16 * i] = { { 1.0, 1.0, 1.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
-		roomVertices[16 * i + 1] = { { 1.0, 1.0, 1.0 }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
-		roomVertices[16 * i + 2] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
-		roomVertices[16 * i + 3] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
+		// dolni stena 
+		roomVertices[16 * i] = { { 0.0, 0.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
+		roomVertices[16 * i + 1] = { { 0.0, (float)floor }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
+		roomVertices[16 * i + 2] = { { 1.0, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
+		roomVertices[16 * i + 3] = { { 1.0, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
 
-		// hodni stena
-		roomVertices[16 * i + 4] = { { 1.0, 1.0, 1.0 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * i + 5] = { { 1.0, 1.0, 1.0 }, { (float)i, TOP_BORDER, 0.0 } };
-		roomVertices[16 * i + 6] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
-		roomVertices[16 * i + 7] = { { 1.0, 1.0, 1.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+		// hodni stena 
+		roomVertices[16 * i + 4] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * i + 5] = { { 0.0, TOP_BORDER - (float)ceiling }, { (float)i, TOP_BORDER, 0.0 } };
+		roomVertices[16 * i + 6] = { { 1.0, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
+		roomVertices[16 * i + 7] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// podlaha
-		roomVertices[16 * i + 8] = { { 0.5, 0.5, 0.5 }, { (float)i, (float)floor, 0.0 } };
-		roomVertices[16 * i + 9] = { { 0.5, 0.5, 0.5 }, { (float)i, (float)floor, DEPTH } };
-		roomVertices[16 * i + 10] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)floor, DEPTH } };
-		roomVertices[16 * i + 11] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)floor, 0.0 } };
+		roomVertices[16 * i + 8] = { { 0.0, 0.0 }, { (float)i, (float)floor, 0.0 } };
+		roomVertices[16 * i + 9] = { { 0.0, DEPTH }, { (float)i, (float)floor, DEPTH } };
+		roomVertices[16 * i + 10] = { { 1.0, DEPTH }, { (float)i + 1.0f, (float)floor, DEPTH } };
+		roomVertices[16 * i + 11] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
 
 		// strop
-		roomVertices[16 * i + 12] = { { 0.5, 0.5, 0.5 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * i + 13] = { { 0.5, 0.5, 0.5 }, { (float)i, (float)ceiling, DEPTH } };
-		roomVertices[16 * i + 14] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
-		roomVertices[16 * i + 15] = { { 0.5, 0.5, 0.5 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+		roomVertices[16 * i + 12] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * i + 13] = { { 0.0, DEPTH }, { (float)i, (float)ceiling, DEPTH } };
+		roomVertices[16 * i + 14] = { { 1.0, DEPTH }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
+		roomVertices[16 * i + 15] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// 24 indicii pro kazdy zaznam (8 trojuhelniku)
 		roomIndicies[j++] = (unsigned short) 16 * i;
@@ -288,6 +289,9 @@ void collisionDetection() {
 
 GLuint VBO, EBO, playerVBO, playerEBO;
 
+//textura
+GLuint texture_player, texture_walls, texture_back;
+
 int width, height; // rozmery okna
 float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 
@@ -298,13 +302,14 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 ////////////////////////////////////////////////////////////////////////////////
 
 const char * VSSource
-    = "#version 130\n in vec3 position; in vec3 color; uniform mat4 mvp; out vec3 c; void main() { gl_Position = mvp*vec4(position,1); c = color; }";
+    = "#version 130\n in vec3 position; in vec2 tc; uniform mat4 mvp; out vec2 coord; void main() { gl_Position = mvp*vec4(position,1); coord = tc; }";
 const char * FSSource
-    = "#version 130\n in vec3 c; out vec4 fragColor; void main() { fragColor = vec4(c,1); }";
+    = "#version 130\n in vec2 coord; uniform sampler2D tex; out vec4 fragColor; void main() { fragColor = texture(tex, coord); }";
 
 GLuint VS, FS, Prog;
 
-GLuint positionAttrib, colorAttrib, mvpUniform, colorUniform;
+GLuint positionAttrib, tcAttrib, mvpUniform, textureUniform;
+
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -319,8 +324,9 @@ void onInit(){
     Prog = linkShader(2, VS, FS);
 
     positionAttrib = glGetAttribLocation(Prog, "position");
-    colorAttrib = glGetAttribLocation(Prog, "color");
+	tcAttrib = glGetAttribLocation(Prog, "tc");
     mvpUniform = glGetUniformLocation(Prog, "mvp");
+	textureUniform = glGetUniformLocation(Prog, "tex");
 
     // zkopirujem "mistnost" na grafiku
     glGenBuffers(1, &VBO);
@@ -339,6 +345,48 @@ void onInit(){
 	glGenBuffers(1, &playerEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(playerIndicies), playerIndicies, GL_STATIC_DRAW);
+
+	//nacteni textury hrace ze souboru
+	SDL_Surface * surface = SDL_LoadBMP("../../textures/whitelight2.bmp");
+	if (surface == NULL) throw SDL_Exception();
+
+	glGenTextures(1, &texture_player);
+	glBindTexture(GL_TEXTURE_2D, texture_player);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	// nacteni textury sten ze souboru
+	// bricks2, bricks, egyptstone, greybricks, stonebricks, bluebricks
+	// redlight2, greenlight2, whitelight
+	// ne- oil, img1 a brick- bez depth, wood2, 
+	SDL_Surface * surface1 = SDL_LoadBMP("../../textures/egyptstone.bmp");
+	if (surface1 == NULL) throw SDL_Exception();
+
+	glGenTextures(1, &texture_walls);
+	glBindTexture(GL_TEXTURE_2D, texture_walls);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface1);
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	/*//nacteni textury poadi ze souboru
+	SDL_Surface * surface2 = SDL_LoadBMP("../../textures/oil.bmp");
+	if (surface2 == NULL) throw SDL_Exception();
+
+	glGenTextures(1, &texture_back);
+	glBindTexture(GL_TEXTURE_2D, texture_back);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface2);
+	glGenerateMipmap(GL_TEXTURE_2D);*/
 }
 
 void onWindowRedraw(){
@@ -373,27 +421,38 @@ void onWindowRedraw(){
 	);
 
     glUseProgram(Prog);
-	glEnableVertexAttribArray(positionAttrib);
-	glEnableVertexAttribArray(colorAttrib);
 
 	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
 	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity)? -1: 1), 1));
 
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp));
 
+	glEnableVertexAttribArray(positionAttrib);
+	glEnableVertexAttribArray(tcAttrib);
+
+	//textura hrace
+	glActiveTexture(GL_TEXTURE0);
+	glBindTexture(GL_TEXTURE_2D, texture_player);
+	glUniform1i(textureUniform, 0);
+
 	// vykresleni hrace
 	glBindBuffer(GL_ARRAY_BUFFER, playerVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
-	glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, color));
+	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
 	glDrawElements(GL_TRIANGLES, sizeof(playerIndicies)/sizeof(*playerIndicies), GL_UNSIGNED_BYTE, NULL); //6
 
     glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
 
+	// textura sten
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture_walls);
+	glUniform1i(textureUniform, 1);
+
 	// vykresleni mistnosti
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
-	glVertexAttribPointer(colorAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, color));
+	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords, GL_UNSIGNED_SHORT, NULL);
 

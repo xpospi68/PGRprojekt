@@ -1,30 +1,18 @@
-﻿Build started 11. 11. 2014 1:34:40.
-     1>Project "D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\proj\proj.vcxproj" on node 2 (Build target(s)).
+﻿Build started 28. 11. 2014 18:08:25.
+     1>Project "C:\Users\Tereza\Documents\škola\zima 2014\PGR\projekt\PGRprojekt\proj\proj\proj.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\pgr.cpp ..\..\proj.cpp
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\proj.cpp
          proj.cpp
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(123): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(124): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(129): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(130): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(135): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(136): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(141): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(142): warning C4244: 'initializing' : conversion from 'double' to 'float', possible loss of data
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(344): warning C4065: switch statement contains 'default' but no 'case' labels
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(403): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(507): warning C4065: switch statement contains 'default' but no 'case' labels
          GLM: perspective function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
          GLM: rotate function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
-         pgr.cpp
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\pgr.cpp(189): warning C4800: 'Uint8' : forcing value to bool 'true' or 'false' (performance warning)
-         Generating Code...
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(184): warning C4715: 'loadLevel' : not all control paths return a value
        Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.lib" /MACHINE:X86 Debug\pgr.obj
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\Tereza\Documents\škola\zima 2014\PGR\projekt\PGRprojekt\proj\Debug\proj.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"C:\Users\Tereza\Documents\škola\zima 2014\PGR\projekt\PGRprojekt\proj\Debug\proj.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\Tereza\Documents\škola\zima 2014\PGR\projekt\PGRprojekt\proj\Debug\proj.lib" /MACHINE:X86 Debug\pgr.obj
          Debug\proj.obj
-         LINK : D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.exe not found or not built by the last incremental link; performing full link
-         proj.vcxproj -> D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.exe
-     1>Done Building Project "D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\proj\proj.vcxproj" (Build target(s)).
+         proj.vcxproj -> C:\Users\Tereza\Documents\škola\zima 2014\PGR\projekt\PGRprojekt\proj\Debug\proj.exe
+     1>Done Building Project "C:\Users\Tereza\Documents\škola\zima 2014\PGR\projekt\PGRprojekt\proj\proj\proj.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:03.43
+Time Elapsed 00:00:05.04
