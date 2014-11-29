@@ -62,6 +62,7 @@ typedef struct {
 
 // vrcholy pro "mistnost"
 Point * roomVertices  = nullptr;
+Point * sideWallsVertices = nullptr;
 
 // vrcholy pro hrace (zatim ctverec) => sprite
 // animacia behu - running (!blocked)
@@ -77,9 +78,22 @@ Point playerVertices[4] = {
 	{ { 1.0, 0.0 }, { 0.0, -0.5, PLAYER_DEPTH } }
 };
 
+// vrcholy pozadi
+Point backgroundVertices[4] = {
+	{ { 0.0, 1.0 }, { 0.0, 0.0, -3.0 } },
+	{ { 0.0, 0.0 }, { 0.0, 15.0, -3.0 } },
+	{ { 1.0, 0.0 }, { (float)NUMBER_OF_RECORDS, 15.0, -3.0 } },
+	{ { 1.0, 1.0 }, { (float)NUMBER_OF_RECORDS, 0.0, -3.0 } }
+};
+
 // indicie k temto vrcholum
 unsigned short * roomIndicies = nullptr;
+unsigned short * sideWallsIndicies = nullptr;
 unsigned char playerIndicies[] = { 
+	0, 2, 1,
+	0, 3, 2
+};
+unsigned char backgroundIndicies[] = {
 	0, 2, 1,
 	0, 3, 2
 };
@@ -114,6 +128,8 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 ///	FILE *file;
 	int floor, ceiling, floor_last = - 1, ceiling_last = -1;
 	int j = 0;
+	int sideV = 0;
+	int sideI = 0;
 /**
 	// TODO: dodelat aby to bralo nazev souboru podle parametru level
 	if ((file = fopen("level1.dat", "r")) == NULL){
@@ -142,6 +158,9 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 */
 	roomVertices = new Point[16 * NUMBER_OF_RECORDS];
 	roomIndicies = new unsigned short[24 * NUMBER_OF_RECORDS];
+
+	sideWallsVertices = new Point[16 * NUMBER_OF_RECORDS];
+	sideWallsIndicies = new unsigned short[24 * NUMBER_OF_RECORDS];
 
 	// cyklus pro kazdy zaznam v souboru
 	// v kazdem prochodu se vytvori 2 trojuhelniky (obdelnik) pro dolni stenu, 2 pro horni stenu,
@@ -214,6 +233,35 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 		if ((floor_last != -1) && (floor_last != floor)){
 			// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
 			// TODO dodelat
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, floor, 0.0 } };
+
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsVertices[sideV++] = { { 0.0, abs(floor_last - floor) }, { (float)i, floor_last, 0.0 } };
+
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = (unsigned short)(sideV-2);
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsVertices[sideV++] = { { DEPTH, abs(floor_last - floor) }, { (float)i, floor_last, DEPTH } };
+
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, floor, DEPTH } };
+		}
+
+		if ((ceiling_last != -1) && (ceiling_last != ceiling)){
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, ceiling, 0.0 } };
+
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsVertices[sideV++] = { { 0.0, abs(ceiling_last - ceiling) }, { (float)i, ceiling_last, 0.0 } };
+
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = (unsigned short)(sideV - 2);
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsVertices[sideV++] = { { DEPTH, abs(ceiling_last - ceiling) }, { (float)i, ceiling_last, DEPTH } };
+
+			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, ceiling, DEPTH } };
 
 		}
 
@@ -263,14 +311,14 @@ void collisionDetection() {
 
 
 	// behanie == poda pod nohami, padanie == volny priestor		
-	if (p.gravity && (actual.floor < p.position.y - 0.495)) {
+	if (p.gravity && (actual.floor < p.position.y - 0.5)) {
 		p.running = false; // falling
 		p.position.y -= speed;
 	} else if (p.gravity) {
 		p.running = true;
 	}
 
-	if (!p.gravity && (actual.ceiling > p.position.y + 0.495)) {
+	if (!p.gravity && (actual.ceiling > p.position.y + 0.5)) {
 		p.running = false;
 		p.position.y += speed;
 	} else if (!p.gravity) {
@@ -287,10 +335,10 @@ void collisionDetection() {
 	     << ")"  << endl;
 }
 
-GLuint VBO, EBO, playerVBO, playerEBO;
+GLuint VBO, EBO, playerVBO, playerEBO, backgroundVBO, backgroundEBO, sideVBO, sideEBO;
 
 //textura
-GLuint texture_player, texture_walls, texture_back;
+GLuint texture_player, texture_walls, texture_background;
 
 int width, height; // rozmery okna
 float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
@@ -332,10 +380,28 @@ void onInit(){
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, 16 * numberOfRecords * sizeof(Point), roomVertices, GL_STATIC_DRAW);
+	/*glBufferData(GL_ARRAY_BUFFER, (16 * numberOfRecords * sizeof(Point)) + (200* sizeof(Point)), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * numberOfRecords * sizeof(Point), roomVertices);
+	glBufferSubData(GL_ARRAY_BUFFER, 16 * numberOfRecords * sizeof(Point), (200 * sizeof(Point)), sideWallsVertices);
+	*/
+
 
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24 * numberOfRecords * sizeof(unsigned short), roomIndicies, GL_STATIC_DRAW);
+	/*glBufferData(GL_ELEMENT_ARRAY_BUFFER, (24 * numberOfRecords * sizeof(unsigned short)) + (200 * sizeof(unsigned short)), NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, 24 * numberOfRecords * sizeof(unsigned short), roomIndicies);
+	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 24 * numberOfRecords * sizeof(unsigned short), (200 * sizeof(unsigned short)), sideWallsIndicies);
+	*/
+
+
+	glGenBuffers(1, &sideVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
+	glBufferData(GL_ARRAY_BUFFER, 16 * numberOfRecords * sizeof(Point), sideWallsVertices, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &sideEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24 * numberOfRecords * sizeof(unsigned short), sideWallsIndicies, GL_STATIC_DRAW);
 
 	// zkopirujem hrace
 	glGenBuffers(1, &playerVBO);
@@ -345,6 +411,42 @@ void onInit(){
 	glGenBuffers(1, &playerEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(playerIndicies), playerIndicies, GL_STATIC_DRAW);
+
+	// zkopirujeme pozadi
+	glGenBuffers(1, &backgroundVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(backgroundVertices), backgroundVertices, GL_STATIC_DRAW);
+
+	glGenBuffers(1, &backgroundEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(backgroundIndicies), backgroundIndicies, GL_STATIC_DRAW);
+	
+	//switch levelu
+	string backgroundTexture = "";
+	string roomTexture = "";
+
+	switch (level){
+	case 0: 
+		backgroundTexture = "../../textures/skyline.bmp";
+		roomTexture = "../../textures/greybricks.bmp";
+		break;
+	case 1: 
+		backgroundTexture = "../../textures/city1.bmp";
+		roomTexture = "../../textures/bluebricks.bmp";
+		break;
+	case 2: 
+		backgroundTexture = "../../textures/town.bmp";
+		roomTexture = "../../textures/greybricks.bmp";
+		break;
+	case 3: 
+		backgroundTexture = "../../textures/skyline.bmp";
+		roomTexture = "../../textures/bricks2.bmp";
+		break;
+	case 4:
+		backgroundTexture = "../../textures/skyline.bmp";
+		roomTexture = "../../textures/bricks2.bmp";
+		break;
+	}
 
 	//nacteni textury hrace ze souboru
 	SDL_Surface * surface = SDL_LoadBMP("../../textures/whitelight2.bmp");
@@ -363,7 +465,7 @@ void onInit(){
 	// bricks2, bricks, egyptstone, greybricks, stonebricks, bluebricks
 	// redlight2, greenlight2, whitelight
 	// ne- oil, img1 a brick- bez depth, wood2, 
-	SDL_Surface * surface1 = SDL_LoadBMP("../../textures/egyptstone.bmp");
+	SDL_Surface * surface1 = SDL_LoadBMP(roomTexture.c_str());
 	if (surface1 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_walls);
@@ -375,18 +477,18 @@ void onInit(){
 	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface1);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	/*//nacteni textury poadi ze souboru
-	SDL_Surface * surface2 = SDL_LoadBMP("../../textures/oil.bmp");
+	//nacteni textury pozadi ze souboru
+	SDL_Surface * surface2 = SDL_LoadBMP(backgroundTexture.c_str());
 	if (surface2 == NULL) throw SDL_Exception();
 
-	glGenTextures(1, &texture_back);
-	glBindTexture(GL_TEXTURE_2D, texture_back);
+	glGenTextures(1, &texture_background);
+	glBindTexture(GL_TEXTURE_2D, texture_background);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface2);
-	glGenerateMipmap(GL_TEXTURE_2D);*/
+	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void onWindowRedraw(){
@@ -413,7 +515,7 @@ void onWindowRedraw(){
 	glm::mat4 vp = glm::rotate(
 		glm::rotate(
 			glm::translate(
-				glm::perspective(45.0f, (float)width / (float)height, 1.0f, 1000.0f), cameraPosition
+				glm::perspective(45.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
 			),
 		ry, glm::vec3(1, 0, 0)
 		),
@@ -421,14 +523,52 @@ void onWindowRedraw(){
 	);
 
     glUseProgram(Prog);
+	glEnableVertexAttribArray(positionAttrib);
+	glEnableVertexAttribArray(tcAttrib);
 
 	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
 	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity)? -1: 1), 1));
 
-	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp));
+    
+	//******* POZADI *******//
+	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
 
-	glEnableVertexAttribArray(positionAttrib);
-	glEnableVertexAttribArray(tcAttrib);
+	// textura pozadi
+	glActiveTexture(GL_TEXTURE2);
+	glBindTexture(GL_TEXTURE_2D, texture_background);
+	glUniform1i(textureUniform, 2);
+
+	// vykresleni pozadi
+	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
+	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
+	glDrawElements(GL_TRIANGLES, sizeof(backgroundIndicies), GL_UNSIGNED_BYTE, NULL);
+
+
+	//******* STENY *******//
+	// textura sten
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, texture_walls);
+	glUniform1i(textureUniform, 1);
+
+	// vykresleni mistnosti
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	//glDrawElements(GL_TRIANGLES, (24 * numberOfRecords * sizeof(unsigned short)) + (200 * sizeof(unsigned short)), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, (24 * numberOfRecords * sizeof(unsigned short)) , GL_UNSIGNED_SHORT, NULL);
+
+	glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
+	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
+	glDrawElements(GL_TRIANGLES, (24 * numberOfRecords * sizeof(unsigned short)), GL_UNSIGNED_SHORT, NULL);
+
+
+	//******* HRAC *******//
+	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp));
 
 	//textura hrace
 	glActiveTexture(GL_TEXTURE0);
@@ -440,21 +580,7 @@ void onWindowRedraw(){
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
-	glDrawElements(GL_TRIANGLES, sizeof(playerIndicies)/sizeof(*playerIndicies), GL_UNSIGNED_BYTE, NULL); //6
-
-    glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
-
-	// textura sten
-	glActiveTexture(GL_TEXTURE1);
-	glBindTexture(GL_TEXTURE_2D, texture_walls);
-	glUniform1i(textureUniform, 1);
-
-	// vykresleni mistnosti
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
-	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords, GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, sizeof(playerIndicies), GL_UNSIGNED_BYTE, NULL); //6
 
 	SDL_GL_SwapBuffers();
 }

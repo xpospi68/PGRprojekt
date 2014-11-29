@@ -1,10 +1,18 @@
-﻿Build started 28. 11. 2014 18:08:25.
+﻿Build started 29. 11. 2014 23:25:02.
      1>Project "C:\Users\Tereza\Documents\škola\zima 2014\PGR\projekt\PGRprojekt\proj\proj\proj.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\proj.cpp
          proj.cpp
-     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(403): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(507): warning C4065: switch statement contains 'default' but no 'case' labels
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(237): warning C4244: 'initializing' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(240): warning C4244: 'initializing' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(245): warning C4244: 'initializing' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(248): warning C4244: 'initializing' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(253): warning C4244: 'initializing' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(256): warning C4244: 'initializing' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(261): warning C4244: 'initializing' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(264): warning C4244: 'initializing' : conversion from 'int' to 'float', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(505): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(633): warning C4065: switch statement contains 'default' but no 'case' labels
          GLM: perspective function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
          GLM: rotate function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
        Link:
@@ -15,4 +23,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:05.04
+Time Elapsed 00:00:02.19
