@@ -19,6 +19,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
+#ifdef _MSC_VER // compiler is Microsoft Visual C++
+#  define PATH "../../" 
+#else
+#  define PATH ""
+#endif//_MSC_VER
+
 #define TOP_BORDER 15.0f
 #define LEFT_BORDER -10.0f
 #define DEPTH -3.0f
@@ -427,29 +433,29 @@ void onInit(){
 
 	switch (level){
 	case 0: 
-		backgroundTexture = "../../textures/skyline.bmp";
-		roomTexture = "../../textures/greybricks.bmp";
+		backgroundTexture = PATH"textures/skyline.bmp";
+		roomTexture = PATH"textures/greybricks.bmp";
 		break;
 	case 1: 
-		backgroundTexture = "../../textures/city1.bmp";
-		roomTexture = "../../textures/bluebricks.bmp";
+		backgroundTexture = PATH"textures/city1.bmp";
+		roomTexture = PATH"textures/bluebricks.bmp";
 		break;
 	case 2: 
-		backgroundTexture = "../../textures/town.bmp";
-		roomTexture = "../../textures/greybricks.bmp";
+		backgroundTexture = PATH"textures/town.bmp";
+		roomTexture = PATH"textures/greybricks.bmp";
 		break;
 	case 3: 
-		backgroundTexture = "../../textures/skyline.bmp";
-		roomTexture = "../../textures/bricks2.bmp";
+		backgroundTexture = PATH"textures/skyline.bmp";
+		roomTexture = PATH"textures/bricks2.bmp";
 		break;
 	case 4:
-		backgroundTexture = "../../textures/skyline.bmp";
-		roomTexture = "../../textures/bricks2.bmp";
+		backgroundTexture = PATH"textures/skyline.bmp";
+		roomTexture = PATH"textures/bricks2.bmp";
 		break;
 	}
 
 	//nacteni textury hrace ze souboru
-	SDL_Surface * surface = SDL_LoadBMP("../../textures/whitelight2.bmp");
+	SDL_Surface * surface = SDL_LoadBMP(PATH"textures/whitelight2.bmp");
 	if (surface == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_player);

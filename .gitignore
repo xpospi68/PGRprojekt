@@ -3,6 +3,8 @@
 /proj/proj
 /GL
 /glm
+/doc
 GLee.c
 *.o
 *.exe
+*~
