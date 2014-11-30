@@ -240,34 +240,34 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 			// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
 			// TODO dodelat
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, floor, 0.0 } };
+			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, (float)floor, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.0, abs(floor_last - floor) }, { (float)i, floor_last, 0.0 } };
+			sideWallsVertices[sideV++] = { { 0.0, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsIndicies[sideI++] = (unsigned short)(sideV-2);
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { DEPTH, abs(floor_last - floor) }, { (float)i, floor_last, DEPTH } };
+			sideWallsVertices[sideV++] = { { DEPTH, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, DEPTH } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, floor, DEPTH } };
+			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, (float)floor, DEPTH } };
 		}
 
 		if ((ceiling_last != -1) && (ceiling_last != ceiling)){
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, ceiling, 0.0 } };
+			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.0, abs(ceiling_last - ceiling) }, { (float)i, ceiling_last, 0.0 } };
+			sideWallsVertices[sideV++] = { { 0.0, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsIndicies[sideI++] = (unsigned short)(sideV - 2);
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { DEPTH, abs(ceiling_last - ceiling) }, { (float)i, ceiling_last, DEPTH } };
+			sideWallsVertices[sideV++] = { { DEPTH, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, DEPTH } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, ceiling, DEPTH } };
+			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, (float)ceiling, DEPTH } };
 
 		}
 
@@ -288,6 +288,10 @@ void freeAll(){
 		delete [] roomVertices;
 	if (roomIndicies != nullptr)
 		delete [] roomIndicies;
+	if (sideWallsVertices != nullptr)
+		delete [] sideWallsVertices;	
+	if (sideWallsIndicies != nullptr)
+		delete [] sideWallsIndicies;
 }
 
 // zahajenie hry, nastavenie pozicie hraca, kamery a urovne
@@ -634,10 +638,6 @@ void onMouseMove(unsigned /*x*/, unsigned /*y*/, int xrel, int yrel, Uint8 butto
 
 void onMouseDown(Uint8 button, unsigned /*x*/, unsigned /*y*/)
 {
-    switch(button) {
-        default : return;
-    };
-    redraw();
 }
 
 void onMouseUp(Uint8 /*button*/, unsigned /*x*/, unsigned /*y*/)
