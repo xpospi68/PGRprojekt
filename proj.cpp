@@ -127,8 +127,9 @@ void initLevel()
 	roomIndicies = new unsigned short[24 * numberOfRecords];
 	roomVertices = new Point[16 * numberOfRecords];
 
-	sideWallsVertices = new Point[16 * numberOfRecords];
-	sideWallsIndicies = new unsigned short[24 * numberOfRecords];
+	// maximalna mozna velkost, vykreslovat sa bude len numberOfSides
+	sideWallsVertices = new Point[4 * numberOfRecords];
+	sideWallsIndicies = new unsigned short[6 * numberOfRecords];
 	
 	for (int i = 0, j = 0; i < numberOfRecords; i++) {
 		// 24 indicii pro kazdy zaznam (8 trojuhelniku)
@@ -289,9 +290,9 @@ void loadLevel(int l)
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * numberOfRecords * sizeof(Point), roomVertices);
 		glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * numberOfSides * sizeof(Point), sideWallsVertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * numberOfRecords * sizeof(Point), sideWallsVertices);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, 6 * numberOfSides * sizeof(unsigned short), sideWallsIndicies);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, 6 * numberOfRecords * sizeof(unsigned short), sideWallsIndicies);
 	}
 }
 
@@ -430,11 +431,11 @@ void onInit(){
 
 	glGenBuffers(1, &sideVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
-	glBufferData(GL_ARRAY_BUFFER, 4 * numberOfSides * sizeof(Point), sideWallsVertices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 4 * numberOfRecords * sizeof(Point), sideWallsVertices, GL_DYNAMIC_DRAW);
 
 	glGenBuffers(1, &sideEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * numberOfSides * sizeof(unsigned short), sideWallsIndicies, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * numberOfRecords * sizeof(unsigned short), sideWallsIndicies, GL_DYNAMIC_DRAW);
 
 	// zkopirujem hrace
 	glGenBuffers(1, &playerVBO);
