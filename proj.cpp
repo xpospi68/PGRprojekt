@@ -319,16 +319,17 @@ void collisionDetection() {
 	else
 		p.blocked = false;
 
+	float tmp = 0.5f + speed; // parametricky voci zmene rychlosti
 
 	// behanie == poda pod nohami, padanie == volny priestor		
-	if (p.gravity && (actual.floor < p.position.y - 0.5)) {
+	if (p.gravity && (actual.floor < p.position.y - tmp)) {
 		p.running = false; // falling
 		p.position.y -= speed;
 	} else if (p.gravity) {
 		p.running = true;
 	}
 
-	if (!p.gravity && (actual.ceiling > p.position.y + 0.5)) {
+	if (!p.gravity && (actual.ceiling > p.position.y + tmp)) {
 		p.running = false;
 		p.position.y += speed;
 	} else if (!p.gravity) {
