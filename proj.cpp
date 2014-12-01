@@ -568,13 +568,13 @@ void onWindowRedraw(){
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	//glDrawElements(GL_TRIANGLES, (24 * numberOfRecords * sizeof(unsigned short)) + (200 * sizeof(unsigned short)), GL_UNSIGNED_SHORT, NULL);
-	glDrawElements(GL_TRIANGLES, (24 * numberOfRecords * sizeof(unsigned short)) , GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords , GL_UNSIGNED_SHORT, NULL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
-	glDrawElements(GL_TRIANGLES, (24 * numberOfRecords * sizeof(unsigned short)), GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords, GL_UNSIGNED_SHORT, NULL);
 
 
 	//******* HRAC *******//
