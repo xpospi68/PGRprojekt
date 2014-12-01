@@ -222,62 +222,62 @@ void loadLevel(int l)
 
 		// vytovrim 16 vrcholu pro kazdy nacteny zaznam (8 trojuhelniku)
 		// dolni stena 
-		roomVertices[16 * j] = { { 0.0, 0.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
-		roomVertices[16 * j + 1] = { { 0.0, (float)floor }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
-		roomVertices[16 * j + 2] = { { 1.0, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
-		roomVertices[16 * j + 3] = { { 1.0, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
+		roomVertices[16 * j] = { { 0.2 * l, 0.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
+		roomVertices[16 * j + 1] = { { 0.2 * l, (float)floor }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
+		roomVertices[16 * j + 2] = { { (0.2 * l) +0.2, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
+		roomVertices[16 * j + 3] = { { (0.2 * l) + 0.2, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
 
 		// hodni stena 
-		roomVertices[16 * j + 4] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * j + 5] = { { 0.0, TOP_BORDER - (float)ceiling }, { (float)i, TOP_BORDER, 0.0 } };
-		roomVertices[16 * j + 6] = { { 1.0, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
-		roomVertices[16 * j + 7] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 4] = { { 0.2 * l, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 5] = { { 0.2 * l, TOP_BORDER - (float)ceiling }, { (float)i, TOP_BORDER, 0.0 } };
+		roomVertices[16 * j + 6] = { { (0.2 * l) + 0.2, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
+		roomVertices[16 * j + 7] = { { (0.2 * l) + 0.2, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// podlaha
-		roomVertices[16 * j + 8] = { { 0.0, 0.0 }, { (float)i, (float)floor, 0.0 } };
-		roomVertices[16 * j + 9] = { { 0.0, DEPTH }, { (float)i, (float)floor, DEPTH } };
-		roomVertices[16 * j + 10] = { { 1.0, DEPTH }, { (float)i + 1.0f, (float)floor, DEPTH } };
-		roomVertices[16 * j + 11] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
+		roomVertices[16 * j + 8] = { { 0.2 * l, 0.0 }, { (float)i, (float)floor, 0.0 } };
+		roomVertices[16 * j + 9] = { { 0.2 * l, DEPTH }, { (float)i, (float)floor, DEPTH } };
+		roomVertices[16 * j + 10] = { { (0.2 * l) + 0.2, DEPTH }, { (float)i + 1.0f, (float)floor, DEPTH } };
+		roomVertices[16 * j + 11] = { { (0.2 * l) + 0.2, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
 
 		// strop
-		roomVertices[16 * j + 12] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * j + 13] = { { 0.0, DEPTH }, { (float)i, (float)ceiling, DEPTH } };
-		roomVertices[16 * j + 14] = { { 1.0, DEPTH }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
-		roomVertices[16 * j + 15] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 12] = { { 0.2 * l, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 13] = { { 0.2 * l, DEPTH }, { (float)i, (float)ceiling, DEPTH } };
+		roomVertices[16 * j + 14] = { { (0.2 * l) + 0.2, DEPTH }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
+		roomVertices[16 * j + 15] = { { (0.2 * l) + 0.2, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
 		if ((floor_last != -1) && (floor_last != floor)){			
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, (float)floor, 0.0 } };
+			sideWallsVertices[sideV++] = { { 0.2 * l, 0.0 }, { (float)i, (float)floor, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.0, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, 0.0 } };
+			sideWallsVertices[sideV++] = { { 0.2 * l, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsIndicies[sideI++] = (unsigned short)(sideV-2);
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { DEPTH, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, DEPTH } };
+			sideWallsVertices[sideV++] = { { (0.2 * l) + 0.2, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, DEPTH } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, (float)floor, DEPTH } };
+			sideWallsVertices[sideV++] = { { (0.2 * l) + 0.2, 0.0 }, { (float)i, (float)floor, DEPTH } };
 
 			numberOfSides++;
 		}
 
 		if ((ceiling_last != -1) && (ceiling_last != ceiling)){
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+			sideWallsVertices[sideV++] = { { 0.2 * l, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.0, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, 0.0 } };
+			sideWallsVertices[sideV++] = { { 0.2 * l, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsIndicies[sideI++] = (unsigned short)(sideV - 2);
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { DEPTH, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, DEPTH } };
+			sideWallsVertices[sideV++] = { { (0.2 * l) + 0.2, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, DEPTH } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, (float)ceiling, DEPTH } };
+			sideWallsVertices[sideV++] = { { (0.2 * l) + 0.2, 0.0 }, { (float)i, (float)ceiling, DEPTH } };
 
 			numberOfSides++;
 		}
@@ -456,7 +456,7 @@ void onInit(){
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(backgroundIndicies), backgroundIndicies, GL_STATIC_DRAW);
 	
 	//switch levelu
-	string backgroundTexture = "";
+/*	string backgroundTexture = "";
 	string roomTexture = "";
 
 	switch (level){
@@ -480,7 +480,7 @@ void onInit(){
 		backgroundTexture = PATH"textures/skyline.bmp";
 		roomTexture = PATH"textures/bricks2.bmp";
 		break;
-	}
+	}*/
 
 	//nacteni textury hrace ze souboru
 	SDL_Surface * surface = SDL_LoadBMP(PATH"textures/whitelight2.bmp");
@@ -499,7 +499,7 @@ void onInit(){
 	// bricks2, bricks, egyptstone, greybricks, stonebricks, bluebricks
 	// redlight2, greenlight2, whitelight
 	// ne- oil, img1 a brick- bez depth, wood2, 
-	SDL_Surface * surface1 = SDL_LoadBMP(roomTexture.c_str());
+	SDL_Surface * surface1 = SDL_LoadBMP(PATH"textures/walls2.bmp");
 	if (surface1 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_walls);
@@ -512,7 +512,7 @@ void onInit(){
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	//nacteni textury pozadi ze souboru
-	SDL_Surface * surface2 = SDL_LoadBMP(backgroundTexture.c_str());
+	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/skyline.bmp");
 	if (surface2 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_background);
