@@ -60,6 +60,7 @@ int level = -1;
 
 // pocet zaznamu v souboru
 int numberOfRecords = NUMBER_OF_RECORDS;//0;
+int numberOfSides = 0;
 
 typedef struct {
 	float texcoord[2];
@@ -236,9 +237,8 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 		roomIndicies[j++] = (unsigned short) 16 * i + 14;
 		roomIndicies[j++] = (unsigned short) 16 * i + 15;
 
-		if ((floor_last != -1) && (floor_last != floor)){
-			// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
-			// TODO dodelat
+		// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
+		if ((floor_last != -1) && (floor_last != floor)){			
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsVertices[sideV++] = { { 0.0, 0.0 }, { (float)i, (float)floor, 0.0 } };
 
@@ -252,6 +252,8 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, (float)floor, DEPTH } };
+
+			numberOfSides++;
 		}
 
 		if ((ceiling_last != -1) && (ceiling_last != ceiling)){
@@ -269,6 +271,7 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsVertices[sideV++] = { { DEPTH, 0.0 }, { (float)i, (float)ceiling, DEPTH } };
 
+			numberOfSides++;
 		}
 
 		floor_last = floor;
@@ -396,7 +399,6 @@ void onInit(){
 	glBufferSubData(GL_ARRAY_BUFFER, 16 * numberOfRecords * sizeof(Point), (200 * sizeof(Point)), sideWallsVertices);
 	*/
 
-
     glGenBuffers(1, &EBO);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24 * numberOfRecords * sizeof(unsigned short), roomIndicies, GL_STATIC_DRAW);
@@ -405,14 +407,13 @@ void onInit(){
 	glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 24 * numberOfRecords * sizeof(unsigned short), (200 * sizeof(unsigned short)), sideWallsIndicies);
 	*/
 
-
 	glGenBuffers(1, &sideVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
-	glBufferData(GL_ARRAY_BUFFER, 16 * numberOfRecords * sizeof(Point), sideWallsVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 4 * numberOfSides * sizeof(Point), sideWallsVertices, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &sideEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 24 * numberOfRecords * sizeof(unsigned short), sideWallsIndicies, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * numberOfSides * sizeof(unsigned short), sideWallsIndicies, GL_STATIC_DRAW);
 
 	// zkopirujem hrace
 	glGenBuffers(1, &playerVBO);
@@ -575,7 +576,7 @@ void onWindowRedraw(){
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
-	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords, GL_UNSIGNED_SHORT, NULL);
+	glDrawElements(GL_TRIANGLES, 6 * numberOfSides , GL_UNSIGNED_SHORT, NULL);
 
 
 	//******* HRAC *******//
