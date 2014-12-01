@@ -26,7 +26,7 @@
 #endif//_MSC_VER
 
 #define TOP_BORDER 15.0f
-#define LEFT_BORDER -10.0f
+#define LEFT_BORDER (-10.0f)
 #define DEPTH -3.0f
 #define PLAYER_DEPTH -1.0f
 
@@ -51,6 +51,7 @@ typedef struct {
 glm::vec3 startPosition = glm::vec3(0, map[0][0].floor+0.5, -1);
 Player p;
 
+//glm::vec3 startCameraPosition(LEFT_BORDER, -7.5, -15); 
 glm::vec3 startCameraPosition(0, -7.5, -15); 
 glm::vec3 cameraPosition; // pozice kamery
 
@@ -58,8 +59,10 @@ float speed = 0.05f; // rychlost hry
 
 int level = -1;
 
-// pocet zaznamu v souboru
-int numberOfRecords = NUMBER_OF_RECORDS;//0;
+int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
+
+// pocet prvkov na vykreslenie sceny
+int numberOfRecords = NUMBER_OF_RECORDS + 2*(-LEFT_BORDER);
 int numberOfSides = 0;
 
 typedef struct {
@@ -77,7 +80,7 @@ Point * sideWallsVertices = nullptr;
 // animacia skakania - !running s x
 // bez animacie / padanie - !running bez x
 
-// !!! koli otacaniu lepsie mat osovu sumernost
+// hrac - osovo sumerny koli otacaniu
 Point playerVertices[4] = { 
 	{ { 0.0, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } },
 	{ { 0.0, 1.0 }, { -1.0, 0.5, PLAYER_DEPTH } },
@@ -87,10 +90,10 @@ Point playerVertices[4] = {
 
 // vrcholy pozadi
 Point backgroundVertices[4] = {
-	{ { 0.0, 1.0 }, { 0.0, 0.0, -3.0 } },
-	{ { 0.0, 0.0 }, { 0.0, 15.0, -3.0 } },
-	{ { 1.0, 0.0 }, { (float)NUMBER_OF_RECORDS, 15.0, -3.0 } },
-	{ { 1.0, 1.0 }, { (float)NUMBER_OF_RECORDS, 0.0, -3.0 } }
+	{ { 0.0, 1.0 }, { (float)LEFT_BORDER, 0.0, -3.0 } },
+	{ { 0.0, 0.0 }, { (float)LEFT_BORDER, 15.0, -3.0 } },
+	{ { 1.0, 0.0 }, { (float)NUMBER_OF_RECORDS+LEFT_BORDER, 15.0, -3.0 } },
+	{ { 1.0, 1.0 }, { (float)NUMBER_OF_RECORDS+LEFT_BORDER, 0.0, -3.0 } }
 };
 
 // indicie k temto vrcholum
@@ -105,109 +108,29 @@ unsigned char backgroundIndicies[] = {
 	0, 3, 2
 };
 
+GLuint VBO, EBO, playerVBO, playerEBO, backgroundVBO, backgroundEBO, sideVBO, sideEBO;
 
+//textura
+GLuint texture_player, texture_walls, texture_background;
 
-/*
-Funkce nacita data levelu
- 
-!!! prepotreby kolizie musim mat mapu niekde hmatatelne ulozenu 
+int width, height; // rozmery okna
+float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 
-Soubory levelu maji format (viz. level1.dat):
-x
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// Pomocne funkce
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 
-y,z
-y,z
-y,z
-.
-.
-.
-EOF
+void initLevel()
+{
+	roomIndicies = new unsigned short[24 * numberOfRecords];
+	roomVertices = new Point[16 * numberOfRecords];
 
-Kde:
-x - znaci pocet zaznamu v souboru - diky tomu lze hned snadno alokovat pamet
-y - znaci vysku podlahy v danem bode
-z - znaci vysku stropu v danem bode, oboje se pocita od spodu od urovne 0
-
-V souboru jsou teda ulozeny pouze vysky a k tomu se prave v teto funkci dopocitava i "podlaha" a "strop" aby
-jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon trosku zajimave.
-*/
-/**int*/void loadLevel(int level){
-///	FILE *file;
-	int floor, ceiling, floor_last = - 1, ceiling_last = -1;
-	int j = 0;
-	int sideV = 0;
-	int sideI = 0;
-/**
-	// TODO: dodelat aby to bralo nazev souboru podle parametru level
-	if ((file = fopen("level1.dat", "r")) == NULL){
-		cout << "ERROR: opening file" << endl;
-		return EXIT_FAILURE;
-	}
-
-	// nacteme prvni cislo v souboru => pocet zaznamu
-	if (fscanf(file, "%i", &numberOfRecords) <= 0){
-		cout << "ERROR: reading file" << endl;
-		return EXIT_FAILURE;
-	}
-*/
-	// alokace pameti..
-/**	roomVertices = (Point *) malloc(16 * numberOfRecords * sizeof(Point));
-	if (roomVertices == NULL){
-		cout << "ERROR: out of memory" << endl;
-		return EXIT_FAILURE;
-	}
-
-	roomIndicies = (unsigned char *)malloc(24 * numberOfRecords * sizeof(unsigned char));
-	if (roomIndicies == NULL){
-		cout << "ERROR: out of memory" << endl;
-		return EXIT_FAILURE;
-	}
-*/
-	roomVertices = new Point[16 * NUMBER_OF_RECORDS];
-	roomIndicies = new unsigned short[24 * NUMBER_OF_RECORDS];
-
-	sideWallsVertices = new Point[16 * NUMBER_OF_RECORDS];
-	sideWallsIndicies = new unsigned short[24 * NUMBER_OF_RECORDS];
-
-	// cyklus pro kazdy zaznam v souboru
-	// v kazdem prochodu se vytvori 2 trojuhelniky (obdelnik) pro dolni stenu, 2 pro horni stenu,
-	// 2 pro podlahu a 2 pro strop
-	// sice se takto vytvari vice trojuhelniku nez je nezbytne nutne, ale aspon je to jednoduche
-/**	for (int i = 0; i < numberOfRecords; i++){
-		if (fscanf(file, "%i,%i", &floor, &ceiling) <= 0){
-			cout << "ERROR: reading file" << endl;
-			return EXIT_FAILURE;
-		}
-*/
-	for (int i = 0; i < NUMBER_OF_RECORDS; i++){
-		floor = map[level][i].floor;
-		ceiling = map[level][i].ceiling;
-
-		// vytovrim 16 vrcholu pro kazdy nacteny zaznam (8 trojuhelniku)
-		// dolni stena 
-		roomVertices[16 * i] = { { 0.0, 0.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
-		roomVertices[16 * i + 1] = { { 0.0, (float)floor }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
-		roomVertices[16 * i + 2] = { { 1.0, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
-		roomVertices[16 * i + 3] = { { 1.0, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
-
-		// hodni stena 
-		roomVertices[16 * i + 4] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * i + 5] = { { 0.0, TOP_BORDER - (float)ceiling }, { (float)i, TOP_BORDER, 0.0 } };
-		roomVertices[16 * i + 6] = { { 1.0, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
-		roomVertices[16 * i + 7] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
-
-		// podlaha
-		roomVertices[16 * i + 8] = { { 0.0, 0.0 }, { (float)i, (float)floor, 0.0 } };
-		roomVertices[16 * i + 9] = { { 0.0, DEPTH }, { (float)i, (float)floor, DEPTH } };
-		roomVertices[16 * i + 10] = { { 1.0, DEPTH }, { (float)i + 1.0f, (float)floor, DEPTH } };
-		roomVertices[16 * i + 11] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
-
-		// strop
-		roomVertices[16 * i + 12] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * i + 13] = { { 0.0, DEPTH }, { (float)i, (float)ceiling, DEPTH } };
-		roomVertices[16 * i + 14] = { { 1.0, DEPTH }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
-		roomVertices[16 * i + 15] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
-
+	sideWallsVertices = new Point[16 * numberOfRecords];
+	sideWallsIndicies = new unsigned short[24 * numberOfRecords];
+	
+	for (int i = 0, j = 0; i < numberOfRecords; i++) {
 		// 24 indicii pro kazdy zaznam (8 trojuhelniku)
 		roomIndicies[j++] = (unsigned short) 16 * i;
 		roomIndicies[j++] = (unsigned short) 16 * i + 2;
@@ -236,6 +159,90 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 		roomIndicies[j++] = (unsigned short) 16 * i + 12;
 		roomIndicies[j++] = (unsigned short) 16 * i + 14;
 		roomIndicies[j++] = (unsigned short) 16 * i + 15;
+	}
+}
+
+
+/*
+Funkce nacita data levelu z promenne map
+
+Jsou teda ulozeny pouze vysky a k tomu se prave v teto funkci dopocitava i "podlaha" a "strop" aby
+jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon trosku zajimave.
+*/
+void loadLevel(int l)
+{
+	int floor, ceiling, floor_last = - 1, ceiling_last = -1;
+	int sideV = 0, sideI = 0;
+	numberOfSides = 0;
+
+	// cyklus pro kazdy zaznam v souboru
+	// v kazdem prochodu se vytvori 2 trojuhelniky (obdelnik) pro dolni stenu, 2 pro horni stenu,
+	// 2 pro podlahu a 2 pro strop
+	// sice se takto vytvari vice trojuhelniku nez je nezbytne nutne, ale aspon je to jednoduche
+
+/*
+	   v-------v
+	xxx000000000111
+	000111111111222
+	111222222222333
+	222333333333yyy
+	
+	x = 1. prvok 0. levelu
+	y = posledny prvok posledneho levelu
+ */
+
+	// j - riadi cyklus
+	// [newlevel][ik] - urcuje prvok
+	// i - urcuje suradnicu x vykreslovanu v scene
+	int newlevel = l; int i = 0;
+
+	for (int j = 0, ik = 0; j < numberOfRecords; ik++, j++)
+	{
+		i = j + NUMBER_OF_RECORDS*l + LEFT_BORDER;
+		if (j == 0)
+		{
+			newlevel = (l == 0)? 0 : l-1;
+			ik = NUMBER_OF_RECORDS + LEFT_BORDER; // 50
+		} else if (j == -LEFT_BORDER)
+		{
+			newlevel = l;
+			ik = 0;
+		} else if (j == NUMBER_OF_RECORDS + -LEFT_BORDER)
+		{
+			ik = 0;
+			newlevel = (l == LEVELS-1)? l : l+1;
+		}
+		
+		if (j < -LEFT_BORDER && newlevel == l) ik = 0;
+		if (j > NUMBER_OF_RECORDS - LEFT_BORDER && newlevel == l) ik = NUMBER_OF_RECORDS-1;
+			
+		floor = map[newlevel][ik].floor;
+		ceiling = map[newlevel][ik].ceiling;
+
+		// vytovrim 16 vrcholu pro kazdy nacteny zaznam (8 trojuhelniku)
+		// dolni stena 
+		roomVertices[16 * j] = { { 0.0, 0.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
+		roomVertices[16 * j + 1] = { { 0.0, (float)floor }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
+		roomVertices[16 * j + 2] = { { 1.0, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
+		roomVertices[16 * j + 3] = { { 1.0, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
+
+		// hodni stena 
+		roomVertices[16 * j + 4] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 5] = { { 0.0, TOP_BORDER - (float)ceiling }, { (float)i, TOP_BORDER, 0.0 } };
+		roomVertices[16 * j + 6] = { { 1.0, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
+		roomVertices[16 * j + 7] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+
+		// podlaha
+		roomVertices[16 * j + 8] = { { 0.0, 0.0 }, { (float)i, (float)floor, 0.0 } };
+		roomVertices[16 * j + 9] = { { 0.0, DEPTH }, { (float)i, (float)floor, DEPTH } };
+		roomVertices[16 * j + 10] = { { 1.0, DEPTH }, { (float)i + 1.0f, (float)floor, DEPTH } };
+		roomVertices[16 * j + 11] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
+
+		// strop
+		roomVertices[16 * j + 12] = { { 0.0, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 13] = { { 0.0, DEPTH }, { (float)i, (float)ceiling, DEPTH } };
+		roomVertices[16 * j + 14] = { { 1.0, DEPTH }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
+		roomVertices[16 * j + 15] = { { 1.0, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
 		if ((floor_last != -1) && (floor_last != floor)){			
@@ -278,15 +285,18 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 		ceiling_last = ceiling;
 	}
 
-///	fclose(file);
-///	return 0;
+	if (level != -1) { // aktualizacia grafickej karty
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * numberOfRecords * sizeof(Point), roomVertices);
+		glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * numberOfSides * sizeof(Point), sideWallsVertices);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, 6 * numberOfSides * sizeof(unsigned short), sideWallsIndicies);
+	}
 }
 
 // uvolneni alokovanych zdroju
 void freeAll(){
-///	free(roomVertices);
-///	if (roomIndicies != NULL)
-///		free(roomIndicies);
 	if (roomVertices != nullptr)
 		delete [] roomVertices;
 	if (roomIndicies != nullptr)
@@ -301,20 +311,44 @@ void freeAll(){
 void initGame() {
 	p = {startPosition, 0, true, false, true};
 	cameraPosition = startCameraPosition;
+	switching = NUMBER_OF_RECORDS;
 	if (level == 0) // vraciame sa, je nacitany
 		return;
 
-	if (level != -1) // nie je zaciatok hry
-		freeAll();
+//	if (level != -1) // nie je zaciatok hry
+//		freeAll();
 
-	level = 0;
 	loadLevel(0);
+	level = 0;
 }
 
 // logika hraca
 void collisionDetection() {
-	Column actual = map[level][(int)trunc(p.position.x-0.5)];
-	Column follow = map[level][(int)ceil(p.position.x-0.99f)];
+/*	int elm = (int)trunc(p.position.x-0.5) % NUMBER_OF_RECORDS;
+	int actlevel = elm / NUMBER_OF_RECORDS;
+	Column actual = map[actlevel][elm];
+
+	cout << "cam-x: "<< cameraPosition.x << ", x: " << p.position.x 
+	     << ", y: " << p.position.y << " ["<< actlevel << "][" << elm <<"] ("
+	     << actual.floor << ", " << actual.ceiling;
+
+	elm = (int)ceil(p.position.x-0.99f) % NUMBER_OF_RECORDS;
+	actlevel += (elm == 0 && p.position.x > 1.0f)? 1 : 0;
+	Column follow = map[actlevel][elm];
+
+	cout << ") ["<< actlevel << "][" << elm <<"] (" << follow.floor << ", " << follow.ceiling 
+	     << ")"  << endl;
+*/
+
+	// mozme si dovolit, lebo data su radene za sebou
+	Column actual = map[0][(int)trunc(p.position.x-0.5)];
+	Column follow = map[0][(int)ceil(p.position.x-0.99f)];
+
+	cout << "cam-x: "<< cameraPosition.x << ", x: " << p.position.x 
+	     << ", y: " << p.position.y << " ("
+	     << actual.floor << ", " << actual.ceiling;
+	cout << ") (" << follow.floor << ", " << follow.ceiling 
+	     << ")"  << endl;
 
 	//blokovanie v pohybe
 	if ((follow.floor > p.position.y - 0.445 ) || (follow.ceiling < p.position.y + 0.445))
@@ -342,20 +376,7 @@ void collisionDetection() {
 	// posun hrace proti smeru kamery => hrac vlastne smerove stoji na miste
 	if (!p.blocked) p.position.x += speed;
 
-	cout << "cam-x: "<< cameraPosition.x << ", x: " << p.position.x 
-	     << ", y: " << p.position.y << "("
-	     << actual.floor << ", " << actual.ceiling 
-	     << ")(" << follow.floor << ", " << follow.ceiling 
-	     << ")"  << endl;
 }
-
-GLuint VBO, EBO, playerVBO, playerEBO, backgroundVBO, backgroundEBO, sideVBO, sideEBO;
-
-//textura
-GLuint texture_player, texture_walls, texture_background;
-
-int width, height; // rozmery okna
-float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -393,7 +414,7 @@ void onInit(){
     // zkopirujem "mistnost" na grafiku
     glGenBuffers(1, &VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, 16 * numberOfRecords * sizeof(Point), roomVertices, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 16 * numberOfRecords * sizeof(Point), roomVertices, GL_DYNAMIC_DRAW);
 	/*glBufferData(GL_ARRAY_BUFFER, (16 * numberOfRecords * sizeof(Point)) + (200* sizeof(Point)), NULL, GL_STATIC_DRAW);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * numberOfRecords * sizeof(Point), roomVertices);
 	glBufferSubData(GL_ARRAY_BUFFER, 16 * numberOfRecords * sizeof(Point), (200 * sizeof(Point)), sideWallsVertices);
@@ -409,11 +430,11 @@ void onInit(){
 
 	glGenBuffers(1, &sideVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
-	glBufferData(GL_ARRAY_BUFFER, 4 * numberOfSides * sizeof(Point), sideWallsVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 4 * numberOfSides * sizeof(Point), sideWallsVertices, GL_DYNAMIC_DRAW);
 
 	glGenBuffers(1, &sideEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * numberOfSides * sizeof(unsigned short), sideWallsIndicies, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * numberOfSides * sizeof(unsigned short), sideWallsIndicies, GL_DYNAMIC_DRAW);
 
 	// zkopirujem hrace
 	glGenBuffers(1, &playerVBO);
@@ -511,7 +532,15 @@ void onWindowRedraw(){
 
 	collisionDetection();
 	
-	// hra konci, ked vyjde z obrazovky
+	//zmena levelu
+	if ((int)(-cameraPosition.x) == switching) {// 60, 120, ...
+		switching += NUMBER_OF_RECORDS;
+		level++;
+		loadLevel(level);
+	}
+		
+	
+	// hra konci, ked vyjde z obrazovky -> upravit!!!
 	if (p.position.y > TOP_BORDER || p.position.y < 0 || cameraPosition.x + p.position.x < LEFT_BORDER)
 	{
 		if (p.position.x > p.best) p.best = p.position.x;
@@ -540,7 +569,7 @@ void onWindowRedraw(){
 
 	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
 	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity)? -1: 1), 1));
-
+//	glm::mat4 mvp = glm::scale(glm::translate(vp, glm::vec3(p.position.x-LEFT_BORDER, p.position.y, p.position.z)), glm::vec3(1, ((p.gravity)? -1: 1), 1));
     
 	//******* POZADI *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
@@ -659,7 +688,7 @@ int main(int /*argc*/, char ** /*argv*/){
 	}*/
 	
 	try {
-
+		initLevel();
 		initGame();
 
 	} catch(bad_alloc & ex) {
