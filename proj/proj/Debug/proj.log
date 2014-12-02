@@ -1,17 +1,9 @@
-﻿Build started 1. 12. 2014 12:47:34.
+﻿Build started 2. 12. 2014 20:09:59.
      1>Project "D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\proj\proj.vcxproj" on node 2 (Build target(s)).
-     1>ClCompile:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MDd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\proj.cpp
-         proj.cpp
-     1>d:\documents\1_skola_magisterske\1. semestr\pgr\projekt\pgrprojekt\proj.cpp(517): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-         GLM: perspective function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
-         GLM: rotate function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
-       Link:
-         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\link.exe /ERRORREPORT:PROMPT /OUT:"D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.exe" /INCREMENTAL /NOLOGO kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /DEBUG /PDB:"D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.pdb" /SUBSYSTEM:CONSOLE /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.lib" /MACHINE:X86 Debug\pgr.obj
-         Debug\proj.obj
+     1>Link:
          proj.vcxproj -> D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\Debug\proj.exe
      1>Done Building Project "D:\Documents\1_SKOLA_MAGISTERSKE\1. semestr\PGR\projekt\PGRprojekt\proj\proj\proj.vcxproj" (Build target(s)).
 
 Build succeeded.
 
-Time Elapsed 00:00:02.93
+Time Elapsed 00:00:00.10
