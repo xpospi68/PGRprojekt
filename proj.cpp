@@ -51,11 +51,11 @@ typedef struct {
 glm::vec3 startPosition = glm::vec3(0, map[0][0].floor+0.5, -1);
 Player p;
 
-//glm::vec3 startCameraPosition(LEFT_BORDER, -7.5, -15); 
 glm::vec3 startCameraPosition(0, -7.5, -15); 
 glm::vec3 cameraPosition; // pozice kamery
 
-float speed = 0.05f; // rychlost hry
+float startSpeed = 0.08f;
+float speed = startSpeed; // rychlost hry
 
 int level = -1;
 
@@ -131,35 +131,38 @@ void initLevel()
 	sideWallsVertices = new Point[4 * numberOfRecords];
 	sideWallsIndicies = new unsigned short[6 * numberOfRecords];
 	
+	unsigned short tmp;
 	for (int i = 0, j = 0; i < numberOfRecords; i++) {
+		tmp = 16 * i;
+		
 		// 24 indicii pro kazdy zaznam (8 trojuhelniku)
-		roomIndicies[j++] = (unsigned short) 16 * i;
-		roomIndicies[j++] = (unsigned short) 16 * i + 2;
-		roomIndicies[j++] = (unsigned short) 16 * i + 1;
-		roomIndicies[j++] = (unsigned short) 16 * i;
-		roomIndicies[j++] = (unsigned short) 16 * i + 3;
-		roomIndicies[j++] = (unsigned short) 16 * i + 2;
+		roomIndicies[j++] = (unsigned short) tmp;
+		roomIndicies[j++] = (unsigned short) tmp + 2;
+		roomIndicies[j++] = (unsigned short) tmp + 1;
+		roomIndicies[j++] = (unsigned short) tmp;
+		roomIndicies[j++] = (unsigned short) tmp + 3;
+		roomIndicies[j++] = (unsigned short) tmp + 2;
 
-		roomIndicies[j++] = (unsigned short) 16 * i + 4;
-		roomIndicies[j++] = (unsigned short) 16 * i + 6;
-		roomIndicies[j++] = (unsigned short) 16 * i + 5;
-		roomIndicies[j++] = (unsigned short) 16 * i + 4;
-		roomIndicies[j++] = (unsigned short) 16 * i + 7;
-		roomIndicies[j++] = (unsigned short) 16 * i + 6;
+		roomIndicies[j++] = (unsigned short) tmp + 4;
+		roomIndicies[j++] = (unsigned short) tmp + 6;
+		roomIndicies[j++] = (unsigned short) tmp + 5;
+		roomIndicies[j++] = (unsigned short) tmp + 4;
+		roomIndicies[j++] = (unsigned short) tmp + 7;
+		roomIndicies[j++] = (unsigned short) tmp + 6;
 
-		roomIndicies[j++] = (unsigned short) 16 * i + 8;
-		roomIndicies[j++] = (unsigned short) 16 * i + 10;
-		roomIndicies[j++] = (unsigned short) 16 * i + 9;
-		roomIndicies[j++] = (unsigned short) 16 * i + 8;
-		roomIndicies[j++] = (unsigned short) 16 * i + 11;
-		roomIndicies[j++] = (unsigned short) 16 * i + 10;
+		roomIndicies[j++] = (unsigned short) tmp + 8;
+		roomIndicies[j++] = (unsigned short) tmp + 10;
+		roomIndicies[j++] = (unsigned short) tmp + 9;
+		roomIndicies[j++] = (unsigned short) tmp + 8;
+		roomIndicies[j++] = (unsigned short) tmp + 11;
+		roomIndicies[j++] = (unsigned short) tmp + 10;
 
-		roomIndicies[j++] = (unsigned short) 16 * i + 12;
-		roomIndicies[j++] = (unsigned short) 16 * i + 13;
-		roomIndicies[j++] = (unsigned short) 16 * i + 14;
-		roomIndicies[j++] = (unsigned short) 16 * i + 12;
-		roomIndicies[j++] = (unsigned short) 16 * i + 14;
-		roomIndicies[j++] = (unsigned short) 16 * i + 15;
+		roomIndicies[j++] = (unsigned short) tmp + 12;
+		roomIndicies[j++] = (unsigned short) tmp + 13;
+		roomIndicies[j++] = (unsigned short) tmp + 14;
+		roomIndicies[j++] = (unsigned short) tmp + 12;
+		roomIndicies[j++] = (unsigned short) tmp + 14;
+		roomIndicies[j++] = (unsigned short) tmp + 15;
 	}
 }
 
@@ -196,6 +199,8 @@ void loadLevel(int l)
 	// [newlevel][ik] - urcuje prvok
 	// i - urcuje suradnicu x vykreslovanu v scene
 	int newlevel = l; int i = 0;
+	// pre texturu
+	float from, to;
 
 	for (int j = 0, ik = 0; j < numberOfRecords; ik++, j++)
 	{
@@ -219,65 +224,69 @@ void loadLevel(int l)
 			
 		floor = map[newlevel][ik].floor;
 		ceiling = map[newlevel][ik].ceiling;
+		
+		//textury (vypocita len raz)
+		from = (0.2f * newlevel) + 0.05f;
+		to = (0.2f * newlevel) + 0.2f;
 
 		// vytovrim 16 vrcholu pro kazdy nacteny zaznam (8 trojuhelniku)
 		// dolni stena 
-		roomVertices[16 * j] = { { 0.2 * newlevel, 0.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
-		roomVertices[16 * j + 1] = { { 0.2 * newlevel, (float)floor }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
-		roomVertices[16 * j + 2] = { { (0.2 * newlevel) + 0.05, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
-		roomVertices[16 * j + 3] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
+		roomVertices[16 * j] = { { 0.2f * newlevel, 0.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
+		roomVertices[16 * j + 1] = { { 0.2f * newlevel, (float)floor }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
+		roomVertices[16 * j + 2] = { { from, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
+		roomVertices[16 * j + 3] = { { from, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
 
 		// hodni stena 
-		roomVertices[16 * j + 4] = { { 0.2 * newlevel, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * j + 5] = { { 0.2 * newlevel, TOP_BORDER - (float)ceiling }, { (float)i, TOP_BORDER, 0.0 } };
-		roomVertices[16 * j + 6] = { { (0.2 * newlevel) + 0.05, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
-		roomVertices[16 * j + 7] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 4] = { { 0.2f * newlevel, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 5] = { { 0.2f * newlevel, TOP_BORDER - (float)ceiling }, { (float)i, TOP_BORDER, 0.0 } };
+		roomVertices[16 * j + 6] = { { from, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
+		roomVertices[16 * j + 7] = { { from, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// podlaha
-		roomVertices[16 * j + 8] = { { (0.2 * newlevel) + 0.05, 1.0 }, { (float)i, (float)floor, 0.0 } };
-		roomVertices[16 * j + 9] = { { (0.2 * newlevel) + 0.2, 1.0 }, { (float)i, (float)floor, DEPTH } };
-		roomVertices[16 * j + 10] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i + 1.0f, (float)floor, DEPTH } };
-		roomVertices[16 * j + 11] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
+		roomVertices[16 * j + 8] = { { from, 1.0f }, { (float)i, (float)floor, 0.0 } };
+		roomVertices[16 * j + 9] = { { to, 1.0f }, { (float)i, (float)floor, DEPTH } };
+		roomVertices[16 * j + 10] = { { to, 0.0 }, { (float)i + 1.0f, (float)floor, DEPTH } };
+		roomVertices[16 * j + 11] = { { from, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
 
 		// strop
-		roomVertices[16 * j + 12] = { { (0.2 * newlevel) + 0.05, 1.0 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * j + 13] = { { (0.2 * newlevel) + 0.2, 1.0 }, { (float)i, (float)ceiling, DEPTH } };
-		roomVertices[16 * j + 14] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
-		roomVertices[16 * j + 15] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 12] = { { from, 1.0f }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 13] = { { to, 1.0f }, { (float)i, (float)ceiling, DEPTH } };
+		roomVertices[16 * j + 14] = { { to, 0.0 }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
+		roomVertices[16 * j + 15] = { { from, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
 		if ((floor_last != -1) && (floor_last != floor)){			
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i, (float)floor, 0.0 } };
+			sideWallsVertices[sideV++] = { { from, 0.0 }, { (float)i, (float)floor, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.05, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, 0.0 } };
+			sideWallsVertices[sideV++] = { { from, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsIndicies[sideI++] = (unsigned short)(sideV-2);
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.2, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, DEPTH } };
+			sideWallsVertices[sideV++] = { { to, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, DEPTH } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i, (float)floor, DEPTH } };
+			sideWallsVertices[sideV++] = { { to, 0.0 }, { (float)i, (float)floor, DEPTH } };
 
 			numberOfSides++;
 		}
 
 		if ((ceiling_last != -1) && (ceiling_last != ceiling)){
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+			sideWallsVertices[sideV++] = { { from, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.05, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, 0.0 } };
+			sideWallsVertices[sideV++] = { { from, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsIndicies[sideI++] = (unsigned short)(sideV - 2);
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.2, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, DEPTH } };
+			sideWallsVertices[sideV++] = { { to, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, DEPTH } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i, (float)ceiling, DEPTH } };
+			sideWallsVertices[sideV++] = { { to, 0.0 }, { (float)i, (float)ceiling, DEPTH } };
 
 			numberOfSides++;
 		}
@@ -312,12 +321,14 @@ void freeAll(){
 void initGame() {
 	p = {startPosition, 0, true, false, true};
 	cameraPosition = startCameraPosition;
+	speed = startSpeed;
 	switching = NUMBER_OF_RECORDS;
 	if (level == 0) // vraciame sa, je nacitany
 		return;
 
-//	if (level != -1) // nie je zaciatok hry
-//		freeAll();
+	if (level == -1) {// uplny zaciatok hry
+		// VYPISAT "press [X] to switch gravity"
+	}
 
 	loadLevel(0);
 	level = 0;
@@ -495,18 +506,28 @@ void onWindowRedraw(){
     glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
+	if (speed == 0)
+		return;
 
 	collisionDetection();
 	
-	//zmena levelu
+	//zmena levelu - zrychlenie
 	if ((int)(-cameraPosition.x) == switching) {// 60, 120, ...
 		switching += NUMBER_OF_RECORDS;
 		level++;
-		loadLevel(level);
-	}
 		
+		if (level == LEVELS) {
+			// VYPISAT "YOU WIN! \n PRESS [X] TO RESTART" (alebo nieco take)
+			cout << "VYHRAL SI!" << endl;
+			speed = 0;
+			p.best = p.position.x;
+		} else {
+			loadLevel(level);
+			speed += 0.01f;
+		}
+	}
 	
-	// hra konci, ked vyjde z obrazovky -> upravit!!!
+	// hra konci, ked vyjde z obrazovky
 	if (p.position.y > TOP_BORDER || p.position.y < 0 || cameraPosition.x + p.position.x < LEFT_BORDER)
 	{
 		if (p.position.x > p.best) p.best = p.position.x;
@@ -535,7 +556,6 @@ void onWindowRedraw(){
 
 	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
 	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity)? -1: 1), 1));
-//	glm::mat4 mvp = glm::scale(glm::translate(vp, glm::vec3(p.position.x-LEFT_BORDER, p.position.y, p.position.z)), glm::vec3(1, ((p.gravity)? -1: 1), 1));
     
 	//******* POZADI *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
@@ -607,6 +627,8 @@ void onKeyDown(SDLKey key, Uint16 /*mod*/)
 				p.running = false;
 				p.gravity = !p.gravity;
 			}
+			if (speed == 0)
+				initGame();
 			break;
 		case SDLK_a: initGame(); break; // just for testing !!!
         default : return;
