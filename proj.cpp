@@ -224,34 +224,34 @@ void loadLevel(int l)
 		// dolni stena 
 		roomVertices[16 * j] = { { 0.2 * newlevel, 0.0 }, { (float)i, 0.0, 0.0 } }; // vlevo dole
 		roomVertices[16 * j + 1] = { { 0.2 * newlevel, (float)floor }, { (float)i, (float)floor, 0.0 } }; // vlevo nahore
-		roomVertices[16 * j + 2] = { { (0.2 * newlevel) + 0.2, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
-		roomVertices[16 * j + 3] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
+		roomVertices[16 * j + 2] = { { (0.2 * newlevel) + 0.05, (float)floor }, { (float)i + 1.0f, (float)floor, 0.0 } }; // vpravo nahore
+		roomVertices[16 * j + 3] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i + 1.0f, 0.0, 0.0 } }; // vpravo dole
 
 		// hodni stena 
 		roomVertices[16 * j + 4] = { { 0.2 * newlevel, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
 		roomVertices[16 * j + 5] = { { 0.2 * newlevel, TOP_BORDER - (float)ceiling }, { (float)i, TOP_BORDER, 0.0 } };
-		roomVertices[16 * j + 6] = { { (0.2 * newlevel) + 0.2, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
-		roomVertices[16 * j + 7] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 6] = { { (0.2 * newlevel) + 0.05, TOP_BORDER - (float)ceiling }, { (float)i + 1.0f, TOP_BORDER, 0.0 } };
+		roomVertices[16 * j + 7] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// podlaha
-		roomVertices[16 * j + 8] = { { 0.2 * newlevel, 0.0 }, { (float)i, (float)floor, 0.0 } };
-		roomVertices[16 * j + 9] = { { 0.2 * newlevel, DEPTH }, { (float)i, (float)floor, DEPTH } };
-		roomVertices[16 * j + 10] = { { (0.2 * newlevel) + 0.2, DEPTH }, { (float)i + 1.0f, (float)floor, DEPTH } };
-		roomVertices[16 * j + 11] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
+		roomVertices[16 * j + 8] = { { (0.2 * newlevel) + 0.05, 1.0 }, { (float)i, (float)floor, 0.0 } };
+		roomVertices[16 * j + 9] = { { (0.2 * newlevel) + 0.2, 1.0 }, { (float)i, (float)floor, DEPTH } };
+		roomVertices[16 * j + 10] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i + 1.0f, (float)floor, DEPTH } };
+		roomVertices[16 * j + 11] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i + 1.0f, (float)floor, 0.0 } };
 
 		// strop
-		roomVertices[16 * j + 12] = { { 0.2 * newlevel, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
-		roomVertices[16 * j + 13] = { { 0.2 * newlevel, DEPTH }, { (float)i, (float)ceiling, DEPTH } };
-		roomVertices[16 * j + 14] = { { (0.2 * newlevel) + 0.2, DEPTH }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
-		roomVertices[16 * j + 15] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 12] = { { (0.2 * newlevel) + 0.05, 1.0 }, { (float)i, (float)ceiling, 0.0 } };
+		roomVertices[16 * j + 13] = { { (0.2 * newlevel) + 0.2, 1.0 }, { (float)i, (float)ceiling, DEPTH } };
+		roomVertices[16 * j + 14] = { { (0.2 * newlevel) + 0.2, 0.0 }, { (float)i + 1.0f, (float)ceiling, DEPTH } };
+		roomVertices[16 * j + 15] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i + 1.0f, (float)ceiling, 0.0 } };
 
 		// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
 		if ((floor_last != -1) && (floor_last != floor)){			
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.2 * newlevel, 0.0 }, { (float)i, (float)floor, 0.0 } };
+			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i, (float)floor, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.2 * newlevel, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, 0.0 } };
+			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.05, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsIndicies[sideI++] = (unsigned short)(sideV-2);
@@ -266,10 +266,10 @@ void loadLevel(int l)
 
 		if ((ceiling_last != -1) && (ceiling_last != ceiling)){
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.2 * newlevel, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
+			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.05, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsVertices[sideV++] = { { 0.2 * newlevel, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, 0.0 } };
+			sideWallsVertices[sideV++] = { { (0.2 * newlevel) + 0.05, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, 0.0 } };
 
 			sideWallsIndicies[sideI++] = (unsigned short)sideV;
 			sideWallsIndicies[sideI++] = (unsigned short)(sideV - 2);
@@ -464,7 +464,7 @@ void onInit(){
 	// bricks2, bricks, egyptstone, greybricks, stonebricks, bluebricks
 	// redlight2, greenlight2, whitelight
 	// ne- oil, img1 a brick- bez depth, wood2, 
-	SDL_Surface * surface1 = SDL_LoadBMP(PATH"textures/walls.bmp");
+	SDL_Surface * surface1 = SDL_LoadBMP(PATH"textures/walls2.bmp");
 	if (surface1 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_walls);
