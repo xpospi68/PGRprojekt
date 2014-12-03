@@ -12,6 +12,8 @@
 
 #include "pgr.h"
 #include "map.hpp"
+#include "SDL_ttf.h"
+#include "SDL.h"
 
 #include <iostream>
 
@@ -60,6 +62,15 @@ float speed = startSpeed; // rychlost hry
 int level = -1;
 
 int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
+
+// pro vypis textu
+TTF_Font *font = NULL;
+SDL_Surface *screen = NULL;
+SDL_Surface *text = NULL;
+SDL_Rect rect = { 0, 0, 10, 20 };
+SDL_Color color = { 0, 255, 0, 255 };
+SDL_Color color_bg = { 255, 0, 0, 255 };
+int size = 17;
 
 // pocet prvkov na vykreslenie sceny
 int numberOfRecords = NUMBER_OF_RECORDS + 2*(-LEFT_BORDER);
@@ -121,6 +132,36 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 // Pomocne funkce
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+
+//funkce pro vypis textu - score
+void drawText(int s, int b){
+	int success = 0;
+	const char * score = "score: ";
+	const char * score_text = score + s;
+
+	text = TTF_RenderUTF8_Solid(font, score, color);
+
+	int countLocked = text->locked;
+	for (int i = 0; i < countLocked; i++) {
+		SDL_UnlockSurface(text);
+	}
+
+	if (text != NULL)
+	{
+		success = SDL_BlitSurface(text, NULL, screen, NULL);
+	}
+	if (success == -1) {
+		const char* errorString = SDL_GetError();
+		printf("SDL_BLIT... failed: %s\n", errorString);
+	}
+	else {
+		for (int i = 0; i < countLocked; i++) {
+			SDL_LockSurface(text);
+		}
+	}
+	SDL_Flip(screen);
+}
+
 
 void initLevel()
 {
@@ -488,7 +529,7 @@ void onInit(){
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	//nacteni textury pozadi ze souboru
-/*	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/skyline.bmp");
+	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/skyline.bmp");
 	if (surface2 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_background);
@@ -498,7 +539,9 @@ void onInit(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface2);
-	glGenerateMipmap(GL_TEXTURE_2D);*/
+	glGenerateMipmap(GL_TEXTURE_2D);
+
+	
 }
 
 void onWindowRedraw(){
@@ -506,6 +549,7 @@ void onWindowRedraw(){
     glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
+	
 	if (speed == 0)
 		return;
 
@@ -534,6 +578,7 @@ void onWindowRedraw(){
 		initGame();
 	}
 
+	
 	// pohyb kamery => vzdy
 	cameraPosition.x -= speed;
 
@@ -566,11 +611,11 @@ void onWindowRedraw(){
 	glUniform1i(textureUniform, 2);
 
 	// vykresleni pozadi
-	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
+/*	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
-	glDrawElements(GL_TRIANGLES, sizeof(backgroundIndicies), GL_UNSIGNED_BYTE, NULL);
+	glDrawElements(GL_TRIANGLES, sizeof(backgroundIndicies), GL_UNSIGNED_BYTE, NULL);*/
 
 
 	//******* STENY *******//
@@ -608,6 +653,9 @@ void onWindowRedraw(){
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
 	glDrawElements(GL_TRIANGLES, sizeof(playerIndicies), GL_UNSIGNED_BYTE, NULL); 
+
+	//vypsani score
+	drawText(p.position.x, p.best);
 
 	SDL_GL_SwapBuffers();
 }
@@ -695,7 +743,22 @@ int main(int /*argc*/, char ** /*argv*/){
         // Shutdown SDL when program ends
         atexit(SDL_Quit);
 
-        /* SDL_Surface * screen = */ init(800, 600, 24, 16, 8);
+		// Init TTF
+		if (TTF_Init() == -1) fprintf(stderr, "Loading TTF failed: %s\n", TTF_GetError());
+
+		// Shutdown TTF when program ends
+		atexit(TTF_Quit);
+
+		// Font
+		int size = 100;
+
+		font = TTF_OpenFont(PATH"font.ttf", size);
+		if (!font){
+			printf("open font failed: %s\n", TTF_GetError());
+		}
+
+        /* SDL_Surface * screen = */
+		screen = init(800, 600, 32, 16, 8);
 
 		mainLoop(20); // delay = 20ms => 50fps 
 
@@ -704,6 +767,14 @@ int main(int /*argc*/, char ** /*argv*/){
         return EXIT_FAILURE;
     }
 
+	// Deinicializace
+	if (font != NULL)
+	{
+		TTF_CloseFont(font);
+		font = NULL;
+	}
+	//SDL_FreeSurface(text);
+	
 	freeAll();
     return EXIT_SUCCESS;
 }
