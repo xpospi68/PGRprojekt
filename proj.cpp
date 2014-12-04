@@ -64,7 +64,7 @@ int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
 
 // pro vypis textu
 
-int pruchod = 0;
+int was_here = 0;
 
 // pocet prvkov na vykreslenie sceny
 int numberOfRecords = NUMBER_OF_RECORDS + 2*(-LEFT_BORDER);
@@ -78,7 +78,6 @@ typedef struct {
 // vrcholy pro "mistnost"
 Point * roomVertices  = nullptr;
 Point * sideWallsVertices = nullptr;
-//Point * textVertices = nullptr; //18*4
 Point * textVertices = nullptr;
 // vrcholy pro hrace (zatim ctverec) => sprite
 // animacia behu - running (!blocked)
@@ -168,9 +167,9 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 ////////////////////////////////////////////////////////////////////////////////
 
 //funkce pro vypis textu - score
-void initText(int s, int b, int x, int y){
+void initText(int s, int b, float x, float y){
 	textVertices = new Point[18 * 4];
-	float size = 0.7f;
+	float size = 0.6f;
 	int s1 = 0;
 	int s2 = 0;
 	int s3 = 0;
@@ -191,7 +190,6 @@ void initText(int s, int b, int x, int y){
 	b2 = b_pom / 10;
 	b3 = b_pom % 10;
 
-	//string s1_ = 
 	string score = "score:";
 	string score_text;
 
@@ -211,23 +209,23 @@ void initText(int s, int b, int x, int y){
 	string completed_text = score_text + " " + best_text;
 	const char * text = completed_text.c_str();
 
-
+	//nastaveni pozic vrcholu a namapovani textury
 	for (unsigned int i = 0; i < 18; i++){
 		char letter = text[i];
 		float uv_x = (letter % 16) / 16.0f;
 		float uv_y = (letter / 16) / 16.0f;
 
-		textVertices[4 * i ] = { { uv_x, 1.0f - (uv_y + 1.0f / 16.0f) }, { (float)x + i*size, (float)y, 0.0 } }; 
-		textVertices[4 * i + 1] = { { uv_x, 1.0f - uv_y }, { (float)x + i*size, (float)y + size, 0.0 } };
-		textVertices[4 * i + 2] = { { uv_x + 1.0f / 16.0f, 1.0f - uv_y }, { (float)x + i*size + size, (float)y + size, 0.0 } };
-		textVertices[4 * i + 3] = { { uv_x + 1.0f / 16.0f, 1.0f - (uv_y + 1.0f / 16.0f) }, { (float)x + i*size + size, (float)y, 0.0 } }; 
+		textVertices[4 * i ] = { { uv_x, 1.0f - (uv_y + 1.0f / 16.0f) }, { x + i*size, y, 0.0 } }; 
+		textVertices[4 * i + 1] = { { uv_x, 1.0f - uv_y }, { x + i*size, y + size, 0.0 } };
+		textVertices[4 * i + 2] = { { uv_x + 1.0f / 16.0f, 1.0f - uv_y }, { x + i*size + size, y + size, 0.0 } };
+		textVertices[4 * i + 3] = { { uv_x + 1.0f / 16.0f, 1.0f - (uv_y + 1.0f / 16.0f) }, { x + i*size + size, y, 0.0 } }; 
 	}
 	//aktualizace vykresleni  
-	if (pruchod != 0){
+	if (was_here != 0){
 		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 72 * sizeof(Point), textVertices);
 	}
-	pruchod = 1;
+	was_here = 1;;
 }
 
 
@@ -444,7 +442,7 @@ void initGame() {
 
 	loadLevel(0);
 	level = 0;
-	initText(0, 0, 0, 0);
+	initText(0, 0, 0.0, 1.5f);
 }
 
 // logika hraca
@@ -679,7 +677,7 @@ void onWindowRedraw(){
 	glm::mat4 vp = glm::rotate(
 		glm::rotate(
 			glm::translate(
-				glm::perspective(55.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
+				glm::perspective(45.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
 			),
 		ry, glm::vec3(1, 0, 0)
 		),
@@ -726,7 +724,7 @@ void onWindowRedraw(){
 	glBindTexture(GL_TEXTURE_2D, texture_text);
 	glUniform1i(textureUniform, 3);
 
-	initText((int)p.position.x, (int)p.best, 0, 0);
+	initText((int)p.position.x, (int)p.best, 0.0, 1.5f);
 
 	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
