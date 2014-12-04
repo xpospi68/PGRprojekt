@@ -12,8 +12,6 @@
 
 #include "pgr.h"
 #include "map.hpp"
-#include "SDL_ttf.h"
-#include "SDL.h"
 
 #include <iostream>
 
@@ -56,6 +54,7 @@ Player p;
 glm::vec3 startCameraPosition(0, -7.5, -15); 
 glm::vec3 cameraPosition; // pozice kamery
 
+
 float startSpeed = 0.08f;
 float speed = startSpeed; // rychlost hry
 
@@ -64,13 +63,8 @@ int level = -1;
 int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
 
 // pro vypis textu
-TTF_Font *font = NULL;
-SDL_Surface *screen = NULL;
-SDL_Surface *text = NULL;
-SDL_Rect rect = { 0, 0, 10, 20 };
-SDL_Color color = { 0, 255, 0, 255 };
-SDL_Color color_bg = { 255, 0, 0, 255 };
-int size = 17;
+
+int pruchod = 0;
 
 // pocet prvkov na vykreslenie sceny
 int numberOfRecords = NUMBER_OF_RECORDS + 2*(-LEFT_BORDER);
@@ -84,7 +78,8 @@ typedef struct {
 // vrcholy pro "mistnost"
 Point * roomVertices  = nullptr;
 Point * sideWallsVertices = nullptr;
-
+//Point * textVertices = nullptr; //18*4
+Point * textVertices = nullptr;
 // vrcholy pro hrace (zatim ctverec) => sprite
 // animacia behu - running (!blocked)
 // animacia tlacenia (alebo 1 frame) - blocked
@@ -110,6 +105,45 @@ Point backgroundVertices[4] = {
 // indicie k temto vrcholum
 unsigned short * roomIndicies = nullptr;
 unsigned short * sideWallsIndicies = nullptr;
+unsigned char textIndicies[] = {
+	0, 2, 1, //s
+	0, 3, 2,
+	4, 6, 5, //c
+	4, 7, 6,
+	8, 10, 9, //o
+	8, 11, 10,
+	12, 14, 13, //r
+	12, 15, 14,
+	16, 18, 17, //e
+	16, 19, 18,
+	20, 22, 21, //:
+	20, 23, 22,
+	24, 26, 25, //s1
+	24, 27, 26, 
+	28, 30, 29, //s2
+	28, 31, 30,
+	32, 34, 33, //s3
+	32, 35, 34,
+	36, 38, 37, //_
+	36, 39, 38,
+	40, 42, 41, //b
+	40, 43, 42,
+	44, 46, 45, //e
+	44, 47, 46,
+	48, 50, 49, //s
+	48, 51, 50,
+	52, 54, 53, //t
+	52, 55, 54,
+	56, 58, 57, //:
+	56, 59, 58,
+	60, 62, 61, //b1
+	60, 63, 62,
+	64, 66, 65, //b2
+	64, 67, 66,
+	68, 70, 69, //b3
+	68, 71, 70
+};
+
 unsigned char playerIndicies[] = { 
 	0, 2, 1,
 	0, 3, 2
@@ -119,10 +153,10 @@ unsigned char backgroundIndicies[] = {
 	0, 3, 2
 };
 
-GLuint VBO, EBO, playerVBO, playerEBO, backgroundVBO, backgroundEBO, sideVBO, sideEBO;
+GLuint VBO, EBO, playerVBO, playerEBO, backgroundVBO, backgroundEBO, sideVBO, sideEBO, textVBO, textEBO;
 
 //textura
-GLuint texture_player, texture_walls, texture_background;
+GLuint texture_player, texture_walls, texture_background, texture_text;
 
 int width, height; // rozmery okna
 float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
@@ -134,32 +168,66 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 ////////////////////////////////////////////////////////////////////////////////
 
 //funkce pro vypis textu - score
-void drawText(int s, int b){
-	int success = 0;
-	const char * score = "score: ";
-	const char * score_text = score + s;
+void initText(int s, int b, int x, int y){
+	textVertices = new Point[18 * 4];
+	float size = 0.7f;
+	int s1 = 0;
+	int s2 = 0;
+	int s3 = 0;
+	int s_pom = 0;
+	int b1 = 0;
+	int b2 = 0;
+	int b3 = 0;
+	int b_pom = 0;
 
-	text = TTF_RenderUTF8_Solid(font, score, color);
+	//prevod cisla na tri cislice
+	s1 = s / 100;
+	s_pom = s % 100;
+	s2 = s_pom / 10;
+	s3 = s_pom % 10;
 
-	int countLocked = text->locked;
-	for (int i = 0; i < countLocked; i++) {
-		SDL_UnlockSurface(text);
-	}
+	b1 = b / 100;
+	b_pom = b % 100;
+	b2 = b_pom / 10;
+	b3 = b_pom % 10;
 
-	if (text != NULL)
-	{
-		success = SDL_BlitSurface(text, NULL, screen, NULL);
+	//string s1_ = 
+	string score = "score:";
+	string score_text;
+
+	string best = "best:";
+	string best_text;
+
+	char buffer1[18];
+	char buffer2[18];
+	char buffer3[18];
+	char buffer4[18];
+	char buffer5[18];
+	char buffer6[18];
+
+	score_text = score + _itoa(s1, buffer1, 10) + _itoa(s2, buffer2, 10) + _itoa(s3, buffer3, 10);
+	best_text = best + _itoa(b1, buffer4, 10) + _itoa(b2, buffer5, 10) + _itoa(b3, buffer6, 10);
+
+	string completed_text = score_text + " " + best_text;
+	const char * text = completed_text.c_str();
+
+
+	for (unsigned int i = 0; i < 18; i++){
+		char letter = text[i];
+		float uv_x = (letter % 16) / 16.0f;
+		float uv_y = (letter / 16) / 16.0f;
+
+		textVertices[4 * i ] = { { uv_x, 1.0f - (uv_y + 1.0f / 16.0f) }, { (float)x + i*size, (float)y, 0.0 } }; 
+		textVertices[4 * i + 1] = { { uv_x, 1.0f - uv_y }, { (float)x + i*size, (float)y + size, 0.0 } };
+		textVertices[4 * i + 2] = { { uv_x + 1.0f / 16.0f, 1.0f - uv_y }, { (float)x + i*size + size, (float)y + size, 0.0 } };
+		textVertices[4 * i + 3] = { { uv_x + 1.0f / 16.0f, 1.0f - (uv_y + 1.0f / 16.0f) }, { (float)x + i*size + size, (float)y, 0.0 } }; 
 	}
-	if (success == -1) {
-		const char* errorString = SDL_GetError();
-		printf("SDL_BLIT... failed: %s\n", errorString);
+	//aktualizace vykresleni  
+	if (pruchod != 0){
+		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 72 * sizeof(Point), textVertices);
 	}
-	else {
-		for (int i = 0; i < countLocked; i++) {
-			SDL_LockSurface(text);
-		}
-	}
-	SDL_Flip(screen);
+	pruchod = 1;
 }
 
 
@@ -356,6 +424,9 @@ void freeAll(){
 		delete [] sideWallsVertices;	
 	if (sideWallsIndicies != nullptr)
 		delete [] sideWallsIndicies;
+
+	/*if (textVertices != nullptr)
+		delete[] textVertices;*/
 }
 
 // zahajenie hry, nastavenie pozicie hraca, kamery a urovne
@@ -373,6 +444,7 @@ void initGame() {
 
 	loadLevel(0);
 	level = 0;
+	initText(0, 0, 0, 0);
 }
 
 // logika hraca
@@ -499,6 +571,15 @@ void onInit(){
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(backgroundIndicies), backgroundIndicies, GL_STATIC_DRAW);
 
+	// zkopiruje text score
+	glGenBuffers(1, &textVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+	glBufferData(GL_ARRAY_BUFFER, 72 * sizeof(Point), textVertices, GL_DYNAMIC_DRAW);
+
+	glGenBuffers(1, &textEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(textIndicies), textIndicies, GL_DYNAMIC_DRAW);
+
 	//nacteni textury hrace ze souboru
 	SDL_Surface * surface = SDL_LoadBMP(PATH"textures/whitelight2.bmp");
 	if (surface == NULL) throw SDL_Exception();
@@ -541,7 +622,18 @@ void onInit(){
 	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface2);
 	glGenerateMipmap(GL_TEXTURE_2D);
 
-	
+	//nacteni textury fontu 
+	SDL_Surface * surface3 = SDL_LoadBMP(PATH"textures/font.bmp");
+	if (surface3 == NULL) throw SDL_Exception();
+
+	glGenTextures(1, &texture_text);
+	glBindTexture(GL_TEXTURE_2D, texture_text);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
+	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface3);
+	glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void onWindowRedraw(){
@@ -549,7 +641,6 @@ void onWindowRedraw(){
     glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	
 	if (speed == 0)
 		return;
 
@@ -588,12 +679,22 @@ void onWindowRedraw(){
 	glm::mat4 vp = glm::rotate(
 		glm::rotate(
 			glm::translate(
-				glm::perspective(45.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
+				glm::perspective(55.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
 			),
 		ry, glm::vec3(1, 0, 0)
 		),
 	rx, glm::vec3(0, 1, 0)
 	);
+
+	glm::mat4 vp1 = glm::rotate(
+		glm::rotate(
+		glm::translate(
+		glm::perspective(55.0f, (float)width / (float)height, 1.f, 1000.0f), glm::vec3(0,0,0)
+		),
+		ry, glm::vec3(0, 0, 1)
+		),
+		rx, glm::vec3(1, 0, 0)
+		);
 
     glUseProgram(Prog);
 	glEnableVertexAttribArray(positionAttrib);
@@ -618,6 +719,21 @@ void onWindowRedraw(){
 	glDrawElements(GL_TRIANGLES, sizeof(backgroundIndicies), GL_UNSIGNED_BYTE, NULL);*/
 
 
+	//******* SCORE *******//
+	//glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, texture_text);
+	glUniform1i(textureUniform, 3);
+
+	initText((int)p.position.x, (int)p.best, 0, 0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+	glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
+
 	//******* STENY *******//
 	// textura sten
 	glActiveTexture(GL_TEXTURE1);
@@ -638,7 +754,6 @@ void onWindowRedraw(){
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sideEBO);
 	glDrawElements(GL_TRIANGLES, 6 * numberOfSides , GL_UNSIGNED_SHORT, NULL);
 
-
 	//******* HRAC *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp));
 
@@ -653,9 +768,6 @@ void onWindowRedraw(){
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
 	glDrawElements(GL_TRIANGLES, sizeof(playerIndicies), GL_UNSIGNED_BYTE, NULL); 
-
-	//vypsani score
-	drawText(p.position.x, p.best);
 
 	SDL_GL_SwapBuffers();
 }
@@ -743,22 +855,8 @@ int main(int /*argc*/, char ** /*argv*/){
         // Shutdown SDL when program ends
         atexit(SDL_Quit);
 
-		// Init TTF
-		if (TTF_Init() == -1) fprintf(stderr, "Loading TTF failed: %s\n", TTF_GetError());
-
-		// Shutdown TTF when program ends
-		atexit(TTF_Quit);
-
-		// Font
-		int size = 100;
-
-		font = TTF_OpenFont(PATH"font.ttf", size);
-		if (!font){
-			printf("open font failed: %s\n", TTF_GetError());
-		}
-
         /* SDL_Surface * screen = */
-		screen = init(800, 600, 32, 16, 8);
+		init(800, 600, 32, 16, 8);
 
 		mainLoop(20); // delay = 20ms => 50fps 
 
@@ -766,14 +864,6 @@ int main(int /*argc*/, char ** /*argv*/){
         cout << "ERROR : " << ex.what() << endl;
         return EXIT_FAILURE;
     }
-
-	// Deinicializace
-	if (font != NULL)
-	{
-		TTF_CloseFont(font);
-		font = NULL;
-	}
-	//SDL_FreeSurface(text);
 	
 	freeAll();
     return EXIT_SUCCESS;
