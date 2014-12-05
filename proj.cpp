@@ -166,22 +166,6 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 // Pomocne funkce
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
-/*const char *_itoa(char *buf, size_t len, int num)
-{
-  static char loc_buf[sizeof(int) * CHAR_BITS]; // not thread safe 
-
-  if (!buf)
-  {
-    buf = loc_buf;
-    len = sizeof(loc_buf);
-  }
-
-  if (snprintf(buf, len, "%d", num) == -1)
-    return ""; // or whatever
-
-  return buf;
-}*/
-
 
 //funkce pro vypis textu - score
 void initText(int s, int b, float x, float y){
