@@ -14,6 +14,7 @@
 #include "map.hpp"
 
 #include <iostream>
+#include <sstream>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -49,7 +50,7 @@ typedef struct {
 } Player;
 
 glm::vec3 startPosition = glm::vec3(0, map[0][0].floor+0.5, -1);
-Player p;
+Player p = {startPosition, 0, true, false, true};
 
 glm::vec3 startCameraPosition(0, -7.5, -15); 
 glm::vec3 cameraPosition; // pozice kamery
@@ -165,6 +166,22 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 // Pomocne funkce
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
+/*const char *_itoa(char *buf, size_t len, int num)
+{
+  static char loc_buf[sizeof(int) * CHAR_BITS]; // not thread safe 
+
+  if (!buf)
+  {
+    buf = loc_buf;
+    len = sizeof(loc_buf);
+  }
+
+  if (snprintf(buf, len, "%d", num) == -1)
+    return ""; // or whatever
+
+  return buf;
+}*/
+
 
 //funkce pro vypis textu - score
 void initText(int s, int b, float x, float y){
@@ -190,24 +207,15 @@ void initText(int s, int b, float x, float y){
 	b2 = b_pom / 10;
 	b3 = b_pom % 10;
 
-	string score = "score:";
-	string score_text;
+	// vysledny text
+	string _text;
 
-	string best = "best:";
-	string best_text;
+	stringstream ss, bb;
+	ss << s1 << s2 << s3;
+	bb << b1 << b2 << b3;
+	_text = "score:" + ss.str() + " best:" + bb.str();
 
-	char buffer1[18];
-	char buffer2[18];
-	char buffer3[18];
-	char buffer4[18];
-	char buffer5[18];
-	char buffer6[18];
-
-	score_text = score + _itoa(s1, buffer1, 10) + _itoa(s2, buffer2, 10) + _itoa(s3, buffer3, 10);
-	best_text = best + _itoa(b1, buffer4, 10) + _itoa(b2, buffer5, 10) + _itoa(b3, buffer6, 10);
-
-	string completed_text = score_text + " " + best_text;
-	const char * text = completed_text.c_str();
+	const char * text = _text.c_str();
 
 	//nastaveni pozic vrcholu a namapovani textury
 	for (unsigned int i = 0; i < 18; i++){
@@ -429,7 +437,10 @@ void freeAll(){
 
 // zahajenie hry, nastavenie pozicie hraca, kamery a urovne
 void initGame() {
-	p = {startPosition, 0, true, false, true};
+	p.position = startPosition;
+	p.running = true;
+	p.blocked = false;
+	p.gravity = true;
 	cameraPosition = startCameraPosition;
 	speed = startSpeed;
 	switching = NUMBER_OF_RECORDS;
@@ -684,22 +695,30 @@ void onWindowRedraw(){
 	rx, glm::vec3(0, 1, 0)
 	);
 
-	glm::mat4 vp1 = glm::rotate(
-		glm::rotate(
-		glm::translate(
-		glm::perspective(55.0f, (float)width / (float)height, 1.f, 1000.0f), glm::vec3(0,0,0)
-		),
-		ry, glm::vec3(0, 0, 1)
-		),
-		rx, glm::vec3(1, 0, 0)
-		);
-
     glUseProgram(Prog);
 	glEnableVertexAttribArray(positionAttrib);
 	glEnableVertexAttribArray(tcAttrib);
 
 	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
 	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity)? -1: 1), 1));
+	
+	// uprava pozicie do rohu - pohyb proti kamere = statie na mieste
+	glm::mat4 mvp1 = glm::translate(vp, glm::vec3(-cameraPosition.x-7, 10.5, 2));
+    
+	//******* SCORE *******//
+	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
+
+	glActiveTexture(GL_TEXTURE3);
+	glBindTexture(GL_TEXTURE_2D, texture_text);
+	glUniform1i(textureUniform, 3);
+
+	initText((int)p.position.x, (int)p.best, 0.0, 1.5f);
+
+	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+	glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
     
 	//******* POZADI *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
@@ -715,22 +734,6 @@ void onWindowRedraw(){
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
 	glDrawElements(GL_TRIANGLES, sizeof(backgroundIndicies), GL_UNSIGNED_BYTE, NULL);*/
-
-
-	//******* SCORE *******//
-	//glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
-
-	glActiveTexture(GL_TEXTURE3);
-	glBindTexture(GL_TEXTURE_2D, texture_text);
-	glUniform1i(textureUniform, 3);
-
-	initText((int)p.position.x, (int)p.best, 0.0, 1.5f);
-
-	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
-	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
-	glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
 
 	//******* STENY *******//
 	// textura sten
