@@ -169,7 +169,6 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 
 //funkce pro vypis textu - score
 void initText(int s, int b, float x, float y){
-	textVertices = new Point[18 * 4];
 	float size = 0.6f;
 	int s1 = 0;
 	int s2 = 0;
@@ -179,30 +178,42 @@ void initText(int s, int b, float x, float y){
 	int b2 = 0;
 	int b3 = 0;
 	int b_pom = 0;
-
-	//prevod cisla na tri cislice
-	s1 = s / 100;
-	s_pom = s % 100;
-	s2 = s_pom / 10;
-	s3 = s_pom % 10;
-
-	b1 = b / 100;
-	b_pom = b % 100;
-	b2 = b_pom / 10;
-	b3 = b_pom % 10;
+	int letter_count = 0;
 
 	// vysledny text
 	string _text;
 
-	stringstream ss, bb;
-	ss << s1 << s2 << s3;
-	bb << b1 << b2 << b3;
-	_text = "score:" + ss.str() + " best:" + bb.str();
+	if (s == -1){ 
+		size = 0.8f;
+		_text = "YOU WON!";
+	}
+	else if (s == -2){
+		size = 0.4f;
+		_text = "Press X to restart";
+	}
+	else {
+		//prevod cisla na tri cislice
+		s1 = s / 100;
+		s_pom = s % 100;
+		s2 = s_pom / 10;
+		s3 = s_pom % 10;
+
+		b1 = b / 100;
+		b_pom = b % 100;
+		b2 = b_pom / 10;
+		b3 = b_pom % 10;
+
+		stringstream ss, bb;
+		ss << s1 << s2 << s3;
+		bb << b1 << b2 << b3;
+		_text = "score:" + ss.str() + " best:" + bb.str();
+	}
 
 	const char * text = _text.c_str();
+	textVertices = new Point[strlen(text) * 4];
 
 	//nastaveni pozic vrcholu a namapovani textury
-	for (unsigned int i = 0; i < 18; i++){
+	for (unsigned int i = 0; i < strlen(text); i++){
 		char letter = text[i];
 		float uv_x = (letter % 16) / 16.0f;
 		float uv_y = (letter / 16) / 16.0f;
@@ -217,8 +228,9 @@ void initText(int s, int b, float x, float y){
 		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 72 * sizeof(Point), textVertices);
 	}
-	was_here = 1;;
+	was_here = 1;
 }
+
 
 
 void initLevel()
@@ -638,15 +650,57 @@ void onWindowRedraw(){
 		return;
 
 	collisionDetection();
-	
+
+	// matice vp = neobsahuje modelovou matici, proto se v ni neprojevi posunuti objektu, nasobi se s ni pouze "mistnost"
+	// tenhle kod mam z cvik, nechapu proc tu nejsou normalni model, view a perspective matice ale je to tu takto vse v jednom :(
+	// vytvari se zvlast matice vp pro mistnost a mvp pro hrace, protoze pouzivame jen 1 VS (muzem pouzivat jen jeden)
+	glm::mat4 vp = glm::rotate(
+		glm::rotate(
+			glm::translate(
+				glm::perspective(45.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
+			),
+			ry, glm::vec3(1, 0, 0)
+		),
+		rx, glm::vec3(0, 1, 0)
+	);
+
+	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
+	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity) ? -1 : 1), 1));
+
+	// uprava pozicie do rohu - pohyb proti kamere = statie na mieste
+	glm::mat4 mvp1 = glm::translate(vp, glm::vec3(-cameraPosition.x - 7, 10.5, 2));
+
 	//zmena levelu - zrychlenie
 	if ((int)(-cameraPosition.x) == switching) {// 60, 120, ...
 		switching += NUMBER_OF_RECORDS;
 		level++;
 		
 		if (level == LEVELS) {
-			// VYPISAT "YOU WIN! \n PRESS [X] TO RESTART" (alebo nieco take)
 			cout << "VYHRAL SI!" << endl;
+			glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
+
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, texture_text);
+			glUniform1i(textureUniform, 3);
+
+			//vypise YOU WON!
+			initText(-1, -1, 4.5f, -2.0f);
+
+			glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+			glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+			glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+			glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
+
+			//vypise Press X to restart
+			initText(-2, -2, 4.0f, -2.5f);
+
+			glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+			glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+			glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+			glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
+
 			speed = 0;
 			p.best = p.position.x;
 		} else {
@@ -665,29 +719,11 @@ void onWindowRedraw(){
 	
 	// pohyb kamery => vzdy
 	cameraPosition.x -= speed;
-
-	// matice vp = neobsahuje modelovou matici, proto se v ni neprojevi posunuti objektu, nasobi se s ni pouze "mistnost"
-	// tenhle kod mam z cvik, nechapu proc tu nejsou normalni model, view a perspective matice ale je to tu takto vse v jednom :(
-	// vytvari se zvlast matice vp pro mistnost a mvp pro hrace, protoze pouzivame jen 1 VS (muzem pouzivat jen jeden)
-	glm::mat4 vp = glm::rotate(
-		glm::rotate(
-			glm::translate(
-				glm::perspective(45.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
-			),
-		ry, glm::vec3(1, 0, 0)
-		),
-	rx, glm::vec3(0, 1, 0)
-	);
-
+	 
     glUseProgram(Prog);
 	glEnableVertexAttribArray(positionAttrib);
 	glEnableVertexAttribArray(tcAttrib);
-
-	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
-	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity)? -1: 1), 1));
-	
-	// uprava pozicie do rohu - pohyb proti kamere = statie na mieste
-	glm::mat4 mvp1 = glm::translate(vp, glm::vec3(-cameraPosition.x-7, 10.5, 2));
+	 
     
 	//******* SCORE *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
@@ -713,7 +749,7 @@ void onWindowRedraw(){
 	glUniform1i(textureUniform, 2);
 
 	// vykresleni pozadi
-/*	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
+	/*glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
