@@ -14,6 +14,7 @@
 #include "map.hpp"
 
 #include <iostream>
+#include <iomanip> // setw, setfill
 #include <sstream>
 
 #include <glm/glm.hpp>
@@ -26,6 +27,7 @@
 #  define PATH ""
 #endif//_MSC_VER
 
+#define MAX_LENGTH_STRING 30
 #define TOP_BORDER 15.0f
 #define LEFT_BORDER (-10.0f)
 #define DEPTH -3.0f
@@ -63,10 +65,6 @@ int level = -1;
 
 int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
 
-// pro vypis textu
-
-int was_here = 0;
-
 // pocet prvkov na vykreslenie sceny
 int numberOfRecords = NUMBER_OF_RECORDS + 2*(-LEFT_BORDER);
 int numberOfSides = 0;
@@ -79,14 +77,13 @@ typedef struct {
 // vrcholy pro "mistnost"
 Point * roomVertices  = nullptr;
 Point * sideWallsVertices = nullptr;
-Point * textVertices = nullptr;
 // vrcholy pro hrace (zatim ctverec) => sprite
 // animacia behu - running (!blocked)
 // animacia tlacenia (alebo 1 frame) - blocked
 // animacia skakania - !running s x
 // bez animacie / padanie - !running bez x
 
-// hrac - osovo sumerny koli otacaniu
+// vrcholy hraca - osovo sumerny koli otacaniu
 Point playerVertices[4] = { 
 	{ { 0.0, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } },
 	{ { 0.0, 1.0 }, { -1.0, 0.5, PLAYER_DEPTH } },
@@ -105,7 +102,7 @@ Point backgroundVertices[4] = {
 // indicie k temto vrcholum
 unsigned short * roomIndicies = nullptr;
 unsigned short * sideWallsIndicies = nullptr;
-unsigned char textIndicies[] = {
+/*[] = {
 	0, 2, 1, //s
 	0, 3, 2,
 	4, 6, 5, //c
@@ -142,7 +139,7 @@ unsigned char textIndicies[] = {
 	64, 67, 66,
 	68, 70, 69, //b3
 	68, 71, 70
-};
+};*/
 
 unsigned char playerIndicies[] = { 
 	0, 2, 1,
@@ -152,6 +149,11 @@ unsigned char backgroundIndicies[] = {
 	0, 2, 1,
 	0, 3, 2
 };
+
+// pro vypis textu
+int was_here = 0;
+Point * textVertices = nullptr;
+unsigned char *textIndicies = nullptr;
 
 GLuint VBO, EBO, playerVBO, playerEBO, backgroundVBO, backgroundEBO, sideVBO, sideEBO, textVBO, textEBO;
 
@@ -167,53 +169,14 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-//funkce pro vypis textu - score
-void initText(int s, int b, float x, float y){
-	float size = 0.6f;
-	int s1 = 0;
-	int s2 = 0;
-	int s3 = 0;
-	int s_pom = 0;
-	int b1 = 0;
-	int b2 = 0;
-	int b3 = 0;
-	int b_pom = 0;
-	int letter_count = 0;
-
-	// vysledny text
-	string _text;
-
-	if (s == -1){ 
-		size = 0.8f;
-		_text = "YOU WON!";
-	}
-	else if (s == -2){
-		size = 0.4f;
-		_text = "Press X to restart";
-	}
-	else {
-		//prevod cisla na tri cislice
-		s1 = s / 100;
-		s_pom = s % 100;
-		s2 = s_pom / 10;
-		s3 = s_pom % 10;
-
-		b1 = b / 100;
-		b_pom = b % 100;
-		b2 = b_pom / 10;
-		b3 = b_pom % 10;
-
-		stringstream ss, bb;
-		ss << s1 << s2 << s3;
-		bb << b1 << b2 << b3;
-		_text = "score:" + ss.str() + " best:" + bb.str();
-	}
-
+//funkce pro vypis textu
+void drawText(string _text, float size, float x, float y)
+{
 	const char * text = _text.c_str();
-	textVertices = new Point[strlen(text) * 4];
+	size_t textLength = strlen(text);
 
 	//nastaveni pozic vrcholu a namapovani textury
-	for (unsigned int i = 0; i < strlen(text); i++){
+	for (unsigned int i = 0; i < textLength; i++){
 		char letter = text[i];
 		float uv_x = (letter % 16) / 16.0f;
 		float uv_y = (letter / 16) / 16.0f;
@@ -226,12 +189,30 @@ void initText(int s, int b, float x, float y){
 	//aktualizace vykresleni  
 	if (was_here != 0){
 		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, 72 * sizeof(Point), textVertices);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * MAX_LENGTH_STRING * sizeof(Point), textVertices);
 	}
 	was_here = 1;
 }
 
+// inicializuje poradie elementov textu
+void initText()
+{
+	textVertices = new Point[MAX_LENGTH_STRING * 4];
+	textIndicies = new unsigned char[MAX_LENGTH_STRING * 6];
+	
+	unsigned char tmp;
+	for (unsigned char i = 0, j = 0; i < MAX_LENGTH_STRING; ++i) {
+		tmp = 4 * i;
 
+		// 6 indicii pre kazde pismeno (2 trojuholniky)
+		textIndicies[j++] = tmp;
+		textIndicies[j++] = tmp + 2;
+		textIndicies[j++] = tmp + 1;
+		textIndicies[j++] = tmp;
+		textIndicies[j++] = tmp + 3;
+		textIndicies[j++] = tmp + 2;
+	}
+}
 
 void initLevel()
 {
@@ -426,9 +407,11 @@ void freeAll(){
 		delete [] sideWallsVertices;	
 	if (sideWallsIndicies != nullptr)
 		delete [] sideWallsIndicies;
+	if (textVertices != nullptr)
+		delete [] textVertices;
+	if (textIndicies != nullptr)
+		delete [] textIndicies;
 
-	/*if (textVertices != nullptr)
-		delete[] textVertices;*/
 }
 
 // zahajenie hry, nastavenie pozicie hraca, kamery a urovne
@@ -443,13 +426,8 @@ void initGame() {
 	if (level == 0) // vraciame sa, je nacitany
 		return;
 
-	if (level == -1) {// uplny zaciatok hry
-		// VYPISAT "press [X] to switch gravity"
-	}
-
 	loadLevel(0);
 	level = 0;
-	initText(0, 0, 0.0, 1.5f);
 }
 
 // logika hraca
@@ -532,6 +510,7 @@ GLuint positionAttrib, tcAttrib, mvpUniform, textureUniform;
 
 void onInit(){		
     // Shader
+    cout << SDL_DEFAULT_REPEAT_DELAY << "  "<< SDL_DEFAULT_REPEAT_INTERVAL <<endl;
     VS = compileShader(GL_VERTEX_SHADER, VSSource);
     FS = compileShader(GL_FRAGMENT_SHADER, FSSource);
     Prog = linkShader(2, VS, FS);
@@ -576,14 +555,14 @@ void onInit(){
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(backgroundIndicies), backgroundIndicies, GL_STATIC_DRAW);
 
-	// zkopiruje text score
+	// zkopiruje text
 	glGenBuffers(1, &textVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-	glBufferData(GL_ARRAY_BUFFER, 72 * sizeof(Point), textVertices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 4 * MAX_LENGTH_STRING * sizeof(Point), textVertices, GL_DYNAMIC_DRAW);
 
 	glGenBuffers(1, &textEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(textIndicies), textIndicies, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * MAX_LENGTH_STRING * sizeof(unsigned char), textIndicies, GL_STATIC_DRAW);
 
 	//nacteni textury hrace ze souboru
 	SDL_Surface * surface = SDL_LoadBMP(PATH"textures/whitelight2.bmp");
@@ -676,7 +655,7 @@ void onWindowRedraw(){
 		level++;
 		
 		if (level == LEVELS) {
-			cout << "VYHRAL SI!" << endl;
+//			cout << "VYHRAL SI!" << endl;
 			glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
 
 			glActiveTexture(GL_TEXTURE3);
@@ -684,22 +663,23 @@ void onWindowRedraw(){
 			glUniform1i(textureUniform, 3);
 
 			//vypise YOU WON!
-			initText(-1, -1, 4.5f, -2.0f);
+			string _text = "YOU WON!";
+			drawText(_text, 0.8f, 4.5f, -2.0f);
 
 			glBindBuffer(GL_ARRAY_BUFFER, textVBO);
 			glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 			glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
-			glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
+			glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
 
-			//vypise Press X to restart
-			initText(-2, -2, 4.0f, -2.5f);
+			_text = "Press X to restart";
+			drawText(_text, 0.4f, 4.0f, -2.5f);
 
 			glBindBuffer(GL_ARRAY_BUFFER, textVBO);
 			glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 			glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
-			glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
+			glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
 
 			speed = 0;
 			p.best = p.position.x;
@@ -723,8 +703,7 @@ void onWindowRedraw(){
     glUseProgram(Prog);
 	glEnableVertexAttribArray(positionAttrib);
 	glEnableVertexAttribArray(tcAttrib);
-	 
-    
+
 	//******* SCORE *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
 
@@ -732,14 +711,31 @@ void onWindowRedraw(){
 	glBindTexture(GL_TEXTURE_2D, texture_text);
 	glUniform1i(textureUniform, 3);
 
-	initText((int)p.position.x, (int)p.best, 0.0, 1.5f);
+	stringstream s;
+	s << "score:" << setw(3) << setfill('0') << (int)p.position.x 
+	  << " best:" << setw(3) << setfill('0') << (int)p.best;
+	string _text = s.str();
+	drawText(_text, 0.6f, 0.0, 1.5f);
 
 	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
-	glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
+	glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
     
+	//******* START TEXT *******//
+	// uplny zaciatok hry
+	if (int(p.best) == 0 && p.position.x < 7.0) {
+		_text = "Press X to switch gravity";
+		drawText(_text, 0.4f, 2.0f, -2.5f);
+
+		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+		glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+		glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+		glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
+	}
+
 	//******* POZADI *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
 
@@ -800,7 +796,7 @@ void onWindowResized(int w, int h)
 }
 
 void onKeyDown(SDLKey key, Uint16 /*mod*/)
-{
+{ //unpressed -> pressed
     switch(key) {
         case SDLK_ESCAPE : quit(); return;
 		case SDLK_x: 
@@ -858,6 +854,7 @@ int main(int /*argc*/, char ** /*argv*/){
 	
 	try {
 		initLevel();
+		initText();
 		initGame();
 
 	} catch(bad_alloc & ex) {
@@ -869,7 +866,11 @@ int main(int /*argc*/, char ** /*argv*/){
     try {
         // Init SDL - only video subsystem will be used
         if(SDL_Init(SDL_INIT_VIDEO) < 0) throw SDL_Exception();
-
+        
+        // press repeat
+//		SDL_EnableKeyRepeat(1,1);
+//		SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+		
 		// meno okna, 0 ==  default ikona
 		SDL_WM_SetCaption("PGR g-switch", NULL);
 
