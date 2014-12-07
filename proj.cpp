@@ -77,7 +77,6 @@ typedef struct {
 // vrcholy pro "mistnost"
 Point * roomVertices  = nullptr;
 Point * sideWallsVertices = nullptr;
-Point * backgroundVertices = nullptr;
 // vrcholy pro hrace (zatim ctverec) => sprite
 // animacia behu - running (!blocked)
 // animacia tlacenia (alebo 1 frame) - blocked
@@ -92,21 +91,82 @@ Point playerVertices[4] = {
 	{ { 1.0, 0.0 }, { 0.0, -0.5, PLAYER_DEPTH } }
 };
 
+// vrcholy pozadi
+Point backgroundVertices[12] = {
+	{ { 0.0, 1.0 }, { (float)LEFT_BORDER, 0.0, -3.0 } },
+	{ { 0.0, 0.0 }, { (float)LEFT_BORDER, 15.0, -3.0 } },
+	{ { 0.2, 0.0 }, { (float)NUMBER_OF_RECORDS, 15.0, -3.0 } },
+	{ { 0.2, 1.0 }, { (float)NUMBER_OF_RECORDS, 0.0, -3.0 } },
+	
+	{ { 0.2, 1.0 }, { (float)NUMBER_OF_RECORDS, 0.0, -3.0 } },
+	{ { 0.2, 0.0 }, { (float)NUMBER_OF_RECORDS, 15.0, -3.0 } },
+	{ { 0.8, 0.0 }, { (float)(LEVELS-1)*NUMBER_OF_RECORDS, 15.0, -3.0 } },
+	{ { 0.8, 1.0 }, { (float)(LEVELS-1)*NUMBER_OF_RECORDS, 0.0, -3.0 } },
+
+	{ { 0.8, 1.0 }, { (float)(LEVELS-1)*NUMBER_OF_RECORDS, 0.0, -3.0 } },
+	{ { 0.8, 0.0 }, { (float)(LEVELS-1)*NUMBER_OF_RECORDS, 15.0, -3.0 } },
+	{ { 1.0, 0.0 }, { (float)LEVELS*NUMBER_OF_RECORDS-LEFT_BORDER, 15.0, -3.0 } },
+	{ { 1.0, 1.0 }, { (float)LEVELS*NUMBER_OF_RECORDS-LEFT_BORDER, 0.0, -3.0 } }
+};
+
+unsigned char backgroundIndicies[] = {
+	0, 2, 1,
+	0, 3, 2,
+	4, 6, 5,
+	4, 7, 6,
+	8, 10, 9,
+	8, 11, 10
+};
+
 // indicie k temto vrcholum
 unsigned short * roomIndicies = nullptr;
 unsigned short * sideWallsIndicies = nullptr;
+/*[] = {
+	0, 2, 1, //s
+	0, 3, 2,
+	4, 6, 5, //c
+	4, 7, 6,
+	8, 10, 9, //o
+	8, 11, 10,
+	12, 14, 13, //r
+	12, 15, 14,
+	16, 18, 17, //e
+	16, 19, 18,
+	20, 22, 21, //:
+	20, 23, 22,
+	24, 26, 25, //s1
+	24, 27, 26, 
+	28, 30, 29, //s2
+	28, 31, 30,
+	32, 34, 33, //s3
+	32, 35, 34,
+	36, 38, 37, //_
+	36, 39, 38,
+	40, 42, 41, //b
+	40, 43, 42,
+	44, 46, 45, //e
+	44, 47, 46,
+	48, 50, 49, //s
+	48, 51, 50,
+	52, 54, 53, //t
+	52, 55, 54,
+	56, 58, 57, //:
+	56, 59, 58,
+	60, 62, 61, //b1
+	60, 63, 62,
+	64, 66, 65, //b2
+	64, 67, 66,
+	68, 70, 69, //b3
+	68, 71, 70
+};*/
 
 unsigned char playerIndicies[] = { 
 	0, 2, 1,
 	0, 3, 2
 };
 
-unsigned char backgroundIndicies[] = {
-	0, 1, 2,
-	0, 3, 2
-};
-
 // pro vypis textu
+int was_here = 0;
 Point * textVertices = nullptr;
 unsigned char *textIndicies = nullptr;
 
@@ -142,8 +202,11 @@ void drawText(string _text, float size, float x, float y)
 		textVertices[4 * i + 3] = { { uv_x + 1.0f / 16.0f, 1.0f - (uv_y + 1.0f / 16.0f) }, { x + i*size + size, y, 0.0 } }; 
 	}
 	//aktualizace vykresleni  
-	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * MAX_LENGTH_STRING * sizeof(Point), textVertices);
+	if (was_here != 0){
+		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * MAX_LENGTH_STRING * sizeof(Point), textVertices);
+	}
+	was_here = 1;
 }
 
 // inicializuje poradie elementov textu
@@ -216,7 +279,7 @@ Funkce nacita data levelu z promenne map
 
 Jsou teda ulozeny pouze vysky a k tomu se prave v teto funkci dopocitava i "podlaha" a "strop" aby
 jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon trosku zajimave.
-*/  
+*/
 void loadLevel(int l)
 {
 	int floor, ceiling, floor_last = - 1, ceiling_last = -1;
@@ -338,7 +401,7 @@ void loadLevel(int l)
 		floor_last = floor;
 		ceiling_last = ceiling;
 	}
-	
+
 	if (level != -1) { // aktualizacia grafickej karty
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * numberOfRecords * sizeof(Point), roomVertices);
@@ -349,32 +412,6 @@ void loadLevel(int l)
 	}
 }
 
-//pozadi 
-void initBackground(int newlevel){
-	backgroundVertices = new Point[4];
-
-	if (newlevel == 0){
-		backgroundVertices[0] = { { 0.2f * newlevel, 1.0 }, { NUMBER_OF_RECORDS* (float)newlevel, 0.0, -3.0 } };
-		backgroundVertices[1] = { { 0.2f * newlevel, 0.0 }, { NUMBER_OF_RECORDS* (float)newlevel, 15.0, -3.0 } };
-		backgroundVertices[2] = { { 0.2f * (newlevel+1) + 0.2f, 0.0 }, { NUMBER_OF_RECORDS* (float)newlevel + 2 * NUMBER_OF_RECORDS, 15.0, -3.0 } };
-		backgroundVertices[3] = { { 0.2f * (newlevel+1) + 0.2f, 1.0 }, { NUMBER_OF_RECORDS* (float)newlevel + 2 * NUMBER_OF_RECORDS, 0.0, -3.0 } };
-	}
-	else if (newlevel != LEVELS){
-		backgroundVertices[0] = { { 0.2f * (newlevel-1), 1.0 }, { NUMBER_OF_RECORDS* ((float)newlevel - 1), 0.0, -3.0 } };
-		backgroundVertices[1] = { { 0.2f * (newlevel-1), 0.0 }, { NUMBER_OF_RECORDS* ((float)newlevel - 1), 15.0, -3.0 } };
-		backgroundVertices[2] = { { 0.2f * (newlevel+1) + 0.2f, 0.0 }, { NUMBER_OF_RECORDS* (float)newlevel + 2*NUMBER_OF_RECORDS, 15.0, -3.0 } };
-		backgroundVertices[3] = { { 0.2f * (newlevel+1) + 0.2f, 1.0 }, { NUMBER_OF_RECORDS* (float)newlevel + 2*NUMBER_OF_RECORDS, 0.0, -3.0 } };
-	}
-	else {
-		backgroundVertices[0] = { { 0.2f * (newlevel-1), 1.0 }, { NUMBER_OF_RECORDS* ((float)newlevel-1), 0.0, -3.0 } };
-		backgroundVertices[1] = { { 0.2f * (newlevel-1), 0.0 }, { NUMBER_OF_RECORDS* ((float)newlevel - 1), 15.0, -3.0 } };
-		backgroundVertices[2] = { { 0.2f * newlevel + 0.2f, 0.0 }, { NUMBER_OF_RECORDS* (float)newlevel + NUMBER_OF_RECORDS, 15.0, -3.0 } };
-		backgroundVertices[3] = { { 0.2f * newlevel + 0.2f, 1.0 }, { NUMBER_OF_RECORDS* (float)newlevel + NUMBER_OF_RECORDS, 0.0, -3.0 } };
-	}
-	
-	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(Point), backgroundVertices);
-}
 // uvolneni alokovanych zdroju
 void freeAll(){
 	if (roomVertices != nullptr)
@@ -389,8 +426,7 @@ void freeAll(){
 		delete [] textVertices;
 	if (textIndicies != nullptr)
 		delete [] textIndicies;
-	if (backgroundVertices != nullptr)
-		delete[] backgroundVertices;
+
 }
 
 // zahajenie hry, nastavenie pozicie hraca, kamery a urovne
@@ -528,7 +564,7 @@ void onInit(){
 	// zkopirujeme pozadi
 	glGenBuffers(1, &backgroundVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
-	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Point), backgroundVertices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(backgroundVertices), backgroundVertices, GL_STATIC_DRAW);
 
 	glGenBuffers(1, &backgroundEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
@@ -573,13 +609,13 @@ void onInit(){
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	//nacteni textury pozadi ze souboru
-	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/background2.bmp");
+	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/background3.bmp");
 	if (surface2 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_background);
 	glBindTexture(GL_TEXTURE_2D, texture_background);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface2);
@@ -723,8 +759,6 @@ void onWindowRedraw(){
 	glBindTexture(GL_TEXTURE_2D, texture_background);
 	glUniform1i(textureUniform, 2);
 
-	initBackground(level);
-
 	// vykresleni pozadi
 	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
@@ -743,6 +777,7 @@ void onWindowRedraw(){
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	//glDrawElements(GL_TRIANGLES, (24 * numberOfRecords * sizeof(unsigned short)) + (200 * sizeof(unsigned short)), GL_UNSIGNED_SHORT, NULL);
 	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords , GL_UNSIGNED_SHORT, NULL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
