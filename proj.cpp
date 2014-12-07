@@ -14,6 +14,7 @@
 #include "map.hpp"
 
 #include <iostream>
+#include <iomanip> // setw, setfill
 #include <sstream>
 
 #include <glm/glm.hpp>
@@ -26,6 +27,7 @@
 #  define PATH ""
 #endif//_MSC_VER
 
+#define MAX_LENGTH_STRING 30
 #define TOP_BORDER 15.0f
 #define LEFT_BORDER (-10.0f)
 #define DEPTH -3.0f
@@ -63,10 +65,6 @@ int level = -1;
 
 int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
 
-// pro vypis textu
-
-int was_here = 0;
-
 // pocet prvkov na vykreslenie sceny
 int numberOfRecords = NUMBER_OF_RECORDS + 2*(-LEFT_BORDER);
 int numberOfSides = 0;
@@ -79,14 +77,14 @@ typedef struct {
 // vrcholy pro "mistnost"
 Point * roomVertices  = nullptr;
 Point * sideWallsVertices = nullptr;
-Point * textVertices = nullptr;
+Point * backgroundVertices = nullptr;
 // vrcholy pro hrace (zatim ctverec) => sprite
 // animacia behu - running (!blocked)
 // animacia tlacenia (alebo 1 frame) - blocked
 // animacia skakania - !running s x
 // bez animacie / padanie - !running bez x
 
-// hrac - osovo sumerny koli otacaniu
+// vrcholy hraca - osovo sumerny koli otacaniu
 Point playerVertices[4] = { 
 	{ { 0.0, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } },
 	{ { 0.0, 1.0 }, { -1.0, 0.5, PLAYER_DEPTH } },
@@ -94,64 +92,23 @@ Point playerVertices[4] = {
 	{ { 1.0, 0.0 }, { 0.0, -0.5, PLAYER_DEPTH } }
 };
 
-// vrcholy pozadi
-Point backgroundVertices[4] = {
-	{ { 0.0, 1.0 }, { (float)LEFT_BORDER, 0.0, -3.0 } },
-	{ { 0.0, 0.0 }, { (float)LEFT_BORDER, 15.0, -3.0 } },
-	{ { 1.0, 0.0 }, { (float)NUMBER_OF_RECORDS+LEFT_BORDER, 15.0, -3.0 } },
-	{ { 1.0, 1.0 }, { (float)NUMBER_OF_RECORDS+LEFT_BORDER, 0.0, -3.0 } }
-};
-
 // indicie k temto vrcholum
 unsigned short * roomIndicies = nullptr;
 unsigned short * sideWallsIndicies = nullptr;
-unsigned char textIndicies[] = {
-	0, 2, 1, //s
-	0, 3, 2,
-	4, 6, 5, //c
-	4, 7, 6,
-	8, 10, 9, //o
-	8, 11, 10,
-	12, 14, 13, //r
-	12, 15, 14,
-	16, 18, 17, //e
-	16, 19, 18,
-	20, 22, 21, //:
-	20, 23, 22,
-	24, 26, 25, //s1
-	24, 27, 26, 
-	28, 30, 29, //s2
-	28, 31, 30,
-	32, 34, 33, //s3
-	32, 35, 34,
-	36, 38, 37, //_
-	36, 39, 38,
-	40, 42, 41, //b
-	40, 43, 42,
-	44, 46, 45, //e
-	44, 47, 46,
-	48, 50, 49, //s
-	48, 51, 50,
-	52, 54, 53, //t
-	52, 55, 54,
-	56, 58, 57, //:
-	56, 59, 58,
-	60, 62, 61, //b1
-	60, 63, 62,
-	64, 66, 65, //b2
-	64, 67, 66,
-	68, 70, 69, //b3
-	68, 71, 70
-};
 
 unsigned char playerIndicies[] = { 
 	0, 2, 1,
 	0, 3, 2
 };
+
 unsigned char backgroundIndicies[] = {
-	0, 2, 1,
+	0, 1, 2,
 	0, 3, 2
 };
+
+// pro vypis textu
+Point * textVertices = nullptr;
+unsigned char *textIndicies = nullptr;
 
 GLuint VBO, EBO, playerVBO, playerEBO, backgroundVBO, backgroundEBO, sideVBO, sideEBO, textVBO, textEBO;
 
@@ -167,42 +124,14 @@ float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
-//funkce pro vypis textu - score
-void initText(int s, int b, float x, float y){
-	textVertices = new Point[18 * 4];
-	float size = 0.6f;
-	int s1 = 0;
-	int s2 = 0;
-	int s3 = 0;
-	int s_pom = 0;
-	int b1 = 0;
-	int b2 = 0;
-	int b3 = 0;
-	int b_pom = 0;
-
-	//prevod cisla na tri cislice
-	s1 = s / 100;
-	s_pom = s % 100;
-	s2 = s_pom / 10;
-	s3 = s_pom % 10;
-
-	b1 = b / 100;
-	b_pom = b % 100;
-	b2 = b_pom / 10;
-	b3 = b_pom % 10;
-
-	// vysledny text
-	string _text;
-
-	stringstream ss, bb;
-	ss << s1 << s2 << s3;
-	bb << b1 << b2 << b3;
-	_text = "score:" + ss.str() + " best:" + bb.str();
-
+//funkce pro vypis textu
+void drawText(string _text, float size, float x, float y)
+{
 	const char * text = _text.c_str();
+	size_t textLength = strlen(text);
 
 	//nastaveni pozic vrcholu a namapovani textury
-	for (unsigned int i = 0; i < 18; i++){
+	for (unsigned int i = 0; i < textLength; i++){
 		char letter = text[i];
 		float uv_x = (letter % 16) / 16.0f;
 		float uv_y = (letter / 16) / 16.0f;
@@ -213,13 +142,29 @@ void initText(int s, int b, float x, float y){
 		textVertices[4 * i + 3] = { { uv_x + 1.0f / 16.0f, 1.0f - (uv_y + 1.0f / 16.0f) }, { x + i*size + size, y, 0.0 } }; 
 	}
 	//aktualizace vykresleni  
-	if (was_here != 0){
-		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, 72 * sizeof(Point), textVertices);
-	}
-	was_here = 1;;
+	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * MAX_LENGTH_STRING * sizeof(Point), textVertices);
 }
 
+// inicializuje poradie elementov textu
+void initText()
+{
+	textVertices = new Point[MAX_LENGTH_STRING * 4];
+	textIndicies = new unsigned char[MAX_LENGTH_STRING * 6];
+	
+	unsigned char tmp;
+	for (unsigned char i = 0, j = 0; i < MAX_LENGTH_STRING; ++i) {
+		tmp = 4 * i;
+
+		// 6 indicii pre kazde pismeno (2 trojuholniky)
+		textIndicies[j++] = tmp;
+		textIndicies[j++] = tmp + 2;
+		textIndicies[j++] = tmp + 1;
+		textIndicies[j++] = tmp;
+		textIndicies[j++] = tmp + 3;
+		textIndicies[j++] = tmp + 2;
+	}
+}
 
 void initLevel()
 {
@@ -271,7 +216,7 @@ Funkce nacita data levelu z promenne map
 
 Jsou teda ulozeny pouze vysky a k tomu se prave v teto funkci dopocitava i "podlaha" a "strop" aby
 jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon trosku zajimave.
-*/
+*/  
 void loadLevel(int l)
 {
 	int floor, ceiling, floor_last = - 1, ceiling_last = -1;
@@ -393,7 +338,7 @@ void loadLevel(int l)
 		floor_last = floor;
 		ceiling_last = ceiling;
 	}
-
+	
 	if (level != -1) { // aktualizacia grafickej karty
 		glBindBuffer(GL_ARRAY_BUFFER, VBO);
 		glBufferSubData(GL_ARRAY_BUFFER, 0, 16 * numberOfRecords * sizeof(Point), roomVertices);
@@ -404,6 +349,32 @@ void loadLevel(int l)
 	}
 }
 
+//pozadi 
+void initBackground(int newlevel){
+	backgroundVertices = new Point[4];
+
+	if (newlevel == 0){
+		backgroundVertices[0] = { { 0.2f * newlevel, 1.0 }, { NUMBER_OF_RECORDS* (float)newlevel, 0.0, -3.0 } };
+		backgroundVertices[1] = { { 0.2f * newlevel, 0.0 }, { NUMBER_OF_RECORDS* (float)newlevel, 15.0, -3.0 } };
+		backgroundVertices[2] = { { 0.2f * (newlevel+1) + 0.2f, 0.0 }, { NUMBER_OF_RECORDS* (float)newlevel + 2 * NUMBER_OF_RECORDS, 15.0, -3.0 } };
+		backgroundVertices[3] = { { 0.2f * (newlevel+1) + 0.2f, 1.0 }, { NUMBER_OF_RECORDS* (float)newlevel + 2 * NUMBER_OF_RECORDS, 0.0, -3.0 } };
+	}
+	else if (newlevel != LEVELS){
+		backgroundVertices[0] = { { 0.2f * (newlevel-1), 1.0 }, { NUMBER_OF_RECORDS* ((float)newlevel - 1), 0.0, -3.0 } };
+		backgroundVertices[1] = { { 0.2f * (newlevel-1), 0.0 }, { NUMBER_OF_RECORDS* ((float)newlevel - 1), 15.0, -3.0 } };
+		backgroundVertices[2] = { { 0.2f * (newlevel+1) + 0.2f, 0.0 }, { NUMBER_OF_RECORDS* (float)newlevel + 2*NUMBER_OF_RECORDS, 15.0, -3.0 } };
+		backgroundVertices[3] = { { 0.2f * (newlevel+1) + 0.2f, 1.0 }, { NUMBER_OF_RECORDS* (float)newlevel + 2*NUMBER_OF_RECORDS, 0.0, -3.0 } };
+	}
+	else {
+		backgroundVertices[0] = { { 0.2f * (newlevel-1), 1.0 }, { NUMBER_OF_RECORDS* ((float)newlevel-1), 0.0, -3.0 } };
+		backgroundVertices[1] = { { 0.2f * (newlevel-1), 0.0 }, { NUMBER_OF_RECORDS* ((float)newlevel - 1), 15.0, -3.0 } };
+		backgroundVertices[2] = { { 0.2f * newlevel + 0.2f, 0.0 }, { NUMBER_OF_RECORDS* (float)newlevel + NUMBER_OF_RECORDS, 15.0, -3.0 } };
+		backgroundVertices[3] = { { 0.2f * newlevel + 0.2f, 1.0 }, { NUMBER_OF_RECORDS* (float)newlevel + NUMBER_OF_RECORDS, 0.0, -3.0 } };
+	}
+	
+	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(Point), backgroundVertices);
+}
 // uvolneni alokovanych zdroju
 void freeAll(){
 	if (roomVertices != nullptr)
@@ -414,9 +385,12 @@ void freeAll(){
 		delete [] sideWallsVertices;	
 	if (sideWallsIndicies != nullptr)
 		delete [] sideWallsIndicies;
-
-	/*if (textVertices != nullptr)
-		delete[] textVertices;*/
+	if (textVertices != nullptr)
+		delete [] textVertices;
+	if (textIndicies != nullptr)
+		delete [] textIndicies;
+	if (backgroundVertices != nullptr)
+		delete[] backgroundVertices;
 }
 
 // zahajenie hry, nastavenie pozicie hraca, kamery a urovne
@@ -431,13 +405,8 @@ void initGame() {
 	if (level == 0) // vraciame sa, je nacitany
 		return;
 
-	if (level == -1) {// uplny zaciatok hry
-		// VYPISAT "press [X] to switch gravity"
-	}
-
 	loadLevel(0);
 	level = 0;
-	initText(0, 0, 0.0, 1.5f);
 }
 
 // logika hraca
@@ -520,6 +489,7 @@ GLuint positionAttrib, tcAttrib, mvpUniform, textureUniform;
 
 void onInit(){		
     // Shader
+    cout << SDL_DEFAULT_REPEAT_DELAY << "  "<< SDL_DEFAULT_REPEAT_INTERVAL <<endl;
     VS = compileShader(GL_VERTEX_SHADER, VSSource);
     FS = compileShader(GL_FRAGMENT_SHADER, FSSource);
     Prog = linkShader(2, VS, FS);
@@ -558,20 +528,20 @@ void onInit(){
 	// zkopirujeme pozadi
 	glGenBuffers(1, &backgroundVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(backgroundVertices), backgroundVertices, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Point), backgroundVertices, GL_DYNAMIC_DRAW);
 
 	glGenBuffers(1, &backgroundEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(backgroundIndicies), backgroundIndicies, GL_STATIC_DRAW);
 
-	// zkopiruje text score
+	// zkopiruje text
 	glGenBuffers(1, &textVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-	glBufferData(GL_ARRAY_BUFFER, 72 * sizeof(Point), textVertices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, 4 * MAX_LENGTH_STRING * sizeof(Point), textVertices, GL_DYNAMIC_DRAW);
 
 	glGenBuffers(1, &textEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(textIndicies), textIndicies, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, 6 * MAX_LENGTH_STRING * sizeof(unsigned char), textIndicies, GL_STATIC_DRAW);
 
 	//nacteni textury hrace ze souboru
 	SDL_Surface * surface = SDL_LoadBMP(PATH"textures/whitelight2.bmp");
@@ -603,13 +573,13 @@ void onInit(){
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	//nacteni textury pozadi ze souboru
-	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/skyline.bmp");
+	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/background2.bmp");
 	if (surface2 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_background);
 	glBindTexture(GL_TEXTURE_2D, texture_background);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface2);
@@ -638,15 +608,58 @@ void onWindowRedraw(){
 		return;
 
 	collisionDetection();
-	
+
+	// matice vp = neobsahuje modelovou matici, proto se v ni neprojevi posunuti objektu, nasobi se s ni pouze "mistnost"
+	// tenhle kod mam z cvik, nechapu proc tu nejsou normalni model, view a perspective matice ale je to tu takto vse v jednom :(
+	// vytvari se zvlast matice vp pro mistnost a mvp pro hrace, protoze pouzivame jen 1 VS (muzem pouzivat jen jeden)
+	glm::mat4 vp = glm::rotate(
+		glm::rotate(
+			glm::translate(
+				glm::perspective(45.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
+			),
+			ry, glm::vec3(1, 0, 0)
+		),
+		rx, glm::vec3(0, 1, 0)
+	);
+
+	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
+	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity) ? -1 : 1), 1));
+
+	// uprava pozicie do rohu - pohyb proti kamere = statie na mieste
+	glm::mat4 mvp1 = glm::translate(vp, glm::vec3(-cameraPosition.x - 7, 10.5, 2));
+
 	//zmena levelu - zrychlenie
 	if ((int)(-cameraPosition.x) == switching) {// 60, 120, ...
 		switching += NUMBER_OF_RECORDS;
 		level++;
 		
 		if (level == LEVELS) {
-			// VYPISAT "YOU WIN! \n PRESS [X] TO RESTART" (alebo nieco take)
-			cout << "VYHRAL SI!" << endl;
+//			cout << "VYHRAL SI!" << endl;
+			glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
+
+			glActiveTexture(GL_TEXTURE3);
+			glBindTexture(GL_TEXTURE_2D, texture_text);
+			glUniform1i(textureUniform, 3);
+
+			//vypise YOU WON!
+			string _text = "YOU WON!";
+			drawText(_text, 0.8f, 4.5f, -2.0f);
+
+			glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+			glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+			glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+			glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
+
+			_text = "Press X to restart";
+			drawText(_text, 0.4f, 4.0f, -2.5f);
+
+			glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+			glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+			glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+			glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
+
 			speed = 0;
 			p.best = p.position.x;
 		} else {
@@ -665,30 +678,11 @@ void onWindowRedraw(){
 	
 	// pohyb kamery => vzdy
 	cameraPosition.x -= speed;
-
-	// matice vp = neobsahuje modelovou matici, proto se v ni neprojevi posunuti objektu, nasobi se s ni pouze "mistnost"
-	// tenhle kod mam z cvik, nechapu proc tu nejsou normalni model, view a perspective matice ale je to tu takto vse v jednom :(
-	// vytvari se zvlast matice vp pro mistnost a mvp pro hrace, protoze pouzivame jen 1 VS (muzem pouzivat jen jeden)
-	glm::mat4 vp = glm::rotate(
-		glm::rotate(
-			glm::translate(
-				glm::perspective(45.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
-			),
-		ry, glm::vec3(1, 0, 0)
-		),
-	rx, glm::vec3(0, 1, 0)
-	);
-
+	 
     glUseProgram(Prog);
 	glEnableVertexAttribArray(positionAttrib);
 	glEnableVertexAttribArray(tcAttrib);
 
-	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
-	glm::mat4 mvp = glm::scale(glm::translate(vp, p.position), glm::vec3(1, ((p.gravity)? -1: 1), 1));
-	
-	// uprava pozicie do rohu - pohyb proti kamere = statie na mieste
-	glm::mat4 mvp1 = glm::translate(vp, glm::vec3(-cameraPosition.x-7, 10.5, 2));
-    
 	//******* SCORE *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
 
@@ -696,14 +690,31 @@ void onWindowRedraw(){
 	glBindTexture(GL_TEXTURE_2D, texture_text);
 	glUniform1i(textureUniform, 3);
 
-	initText((int)p.position.x, (int)p.best, 0.0, 1.5f);
+	stringstream s;
+	s << "score:" << setw(3) << setfill('0') << (int)p.position.x 
+	  << " best:" << setw(3) << setfill('0') << (int)p.best;
+	string _text = s.str();
+	drawText(_text, 0.6f, 0.0, 1.5f);
 
 	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
-	glDrawElements(GL_TRIANGLES, sizeof(textIndicies), GL_UNSIGNED_BYTE, NULL);
+	glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
     
+	//******* START TEXT *******//
+	// uplny zaciatok hry
+	if (int(p.best) == 0 && p.position.x < 7.0) {
+		_text = "Press X to switch gravity";
+		drawText(_text, 0.4f, 2.0f, -2.5f);
+
+		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+		glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
+		glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
+		glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
+	}
+
 	//******* POZADI *******//
 	glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(vp));
 
@@ -712,12 +723,14 @@ void onWindowRedraw(){
 	glBindTexture(GL_TEXTURE_2D, texture_background);
 	glUniform1i(textureUniform, 2);
 
+	initBackground(level);
+
 	// vykresleni pozadi
-/*	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
+	glBindBuffer(GL_ARRAY_BUFFER, backgroundVBO);
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, backgroundEBO);
-	glDrawElements(GL_TRIANGLES, sizeof(backgroundIndicies), GL_UNSIGNED_BYTE, NULL);*/
+	glDrawElements(GL_TRIANGLES, sizeof(backgroundIndicies), GL_UNSIGNED_BYTE, NULL);
 
 	//******* STENY *******//
 	// textura sten
@@ -730,7 +743,6 @@ void onWindowRedraw(){
 	glVertexAttribPointer(positionAttrib, 3, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, position));
 	glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//glDrawElements(GL_TRIANGLES, (24 * numberOfRecords * sizeof(unsigned short)) + (200 * sizeof(unsigned short)), GL_UNSIGNED_SHORT, NULL);
 	glDrawElements(GL_TRIANGLES, 24 * numberOfRecords , GL_UNSIGNED_SHORT, NULL);
 
 	glBindBuffer(GL_ARRAY_BUFFER, sideVBO);
@@ -764,7 +776,7 @@ void onWindowResized(int w, int h)
 }
 
 void onKeyDown(SDLKey key, Uint16 /*mod*/)
-{
+{ //unpressed -> pressed
     switch(key) {
         case SDLK_ESCAPE : quit(); return;
 		case SDLK_x: 
@@ -822,6 +834,7 @@ int main(int /*argc*/, char ** /*argv*/){
 	
 	try {
 		initLevel();
+		initText();
 		initGame();
 
 	} catch(bad_alloc & ex) {
@@ -833,7 +846,11 @@ int main(int /*argc*/, char ** /*argv*/){
     try {
         // Init SDL - only video subsystem will be used
         if(SDL_Init(SDL_INIT_VIDEO) < 0) throw SDL_Exception();
-
+        
+        // press repeat
+//		SDL_EnableKeyRepeat(1,1);
+//		SDL_EnableKeyRepeat(SDL_DEFAULT_REPEAT_DELAY, SDL_DEFAULT_REPEAT_INTERVAL);
+		
 		// meno okna, 0 ==  default ikona
 		SDL_WM_SetCaption("PGR g-switch", NULL);
 
