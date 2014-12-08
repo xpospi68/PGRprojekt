@@ -596,7 +596,7 @@ void onInit(){
 	// bricks2, bricks, egyptstone, greybricks, stonebricks, bluebricks
 	// redlight2, greenlight2, whitelight
 	// ne- oil, img1 a brick- bez depth, wood2, 
-	SDL_Surface * surface1 = SDL_LoadBMP(PATH"textures/walls2.bmp");
+	SDL_Surface * surface1 = SDL_LoadBMP(PATH"textures/walls.bmp");
 	if (surface1 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_walls);
@@ -609,7 +609,7 @@ void onInit(){
 	glGenerateMipmap(GL_TEXTURE_2D);
 
 	//nacteni textury pozadi ze souboru
-	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/background3.bmp");
+	SDL_Surface * surface2 = SDL_LoadBMP(PATH"textures/background2.bmp");
 	if (surface2 == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texture_background);
