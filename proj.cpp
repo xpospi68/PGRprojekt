@@ -166,7 +166,6 @@ GLuint VBO, EBO, playerVBO, playerEBO, backgroundVBO, backgroundEBO, sideVBO, si
 GLuint texturePlayer, textureWalls, textureBackground, textureText;
 
 int width, height; // rozmery okna
-float rx = 0.0f, ry = 0.0f; // natoceni kamery, ve finale se bude moci smazat
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
@@ -673,9 +672,9 @@ void onWindowRedraw(){
 			glm::translate(
 				glm::perspective(45.0f, (float)width / (float)height, 1.f, 1000.0f), cameraPosition
 			),
-			ry, glm::vec3(1, 0, 0)
+			0.0f, glm::vec3(1, 0, 0)
 		),
-		rx, glm::vec3(0, 1, 0)
+		0.0f, glm::vec3(0, 1, 0)
 	);
 
 	// "nasobeni" modelovou matici - preklapanie na zmenu gravitacie
@@ -860,17 +859,6 @@ void onKeyUp(SDLKey /*key*/, Uint16 /*mod*/)
 
 void onMouseMove(unsigned /*x*/, unsigned /*y*/, int xrel, int yrel, Uint8 buttons)
 {
-    if(buttons & SDL_BUTTON_LMASK)
-    {
-        rx += xrel;
-        ry += yrel;
-        redraw();
-    }
-    if(buttons & SDL_BUTTON_RMASK)
-    {
-        //pz += yrel;
-        redraw();
-    }
 }
 
 void onMouseDown(Uint8 button, unsigned /*x*/, unsigned /*y*/)
