@@ -62,7 +62,7 @@ float startSpeed = 0.08f;
 float speed = startSpeed; // rychlost hry
 
 int level = -1;
-int function = 0; // pohyb hrace
+int function = 2; // pohyb hrace
 unsigned timep = 0;
 
 int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
@@ -269,24 +269,24 @@ void initLevel()
 void initPlayer(Player p){
 
 	if (p.running == true && p.blocked == false){//bezi
-		if ((timep % 6 == 0) && (timep / 6 >= 1 )){
-			if (function == 0)
-				function = 1;
+		if ((timep % 5 == 0) && (timep / 5 >= 1 )){
+			if (function == 2 || function == 3 || function == 4)
+				function += 1;
 			else
-				function = 0;
+				function = 2;
 			timep = 0;
 		}
 	}
 	else if (p.running == true && p.blocked == true)//stoji
-		function = 2;
+		function = 0;
 	else if (p.running == false && p.blocked == false)//pada
-		function = 2;
+		function = 1;
 	
 	// vrcholy hraca - osovo sumerny koli otacaniu
-	playerVertices[0] = { { 0.25f * function, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } };
-	playerVertices[1] = { { 0.25f * function, 1.0 }, { -1.0, 0.5, PLAYER_DEPTH } };
-	playerVertices[2] = { { 0.25f * function + 0.25f, 1.0 }, { 0.0, 0.5, PLAYER_DEPTH } };
-	playerVertices[3] = { { 0.25f * function + 0.25f, 0.0 }, { 0.0, -0.5, PLAYER_DEPTH } };
+	playerVertices[0] = { { 0.125f * function, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } };
+	playerVertices[1] = { { 0.125f * function, 1.0 }, { -1.0, 0.5, PLAYER_DEPTH } };
+	playerVertices[2] = { { 0.125f * function + 0.125f, 1.0 }, { 0.0, 0.5, PLAYER_DEPTH } };
+	playerVertices[3] = { { 0.125f * function + 0.125f, 0.0 }, { 0.0, -0.5, PLAYER_DEPTH } };
 
 	glBindBuffer(GL_ARRAY_BUFFER, playerVBO);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(Point), playerVertices);
@@ -599,7 +599,7 @@ void onInit(){
 
 	/************ TEXTURY ************/
 	//nacteni textury hrace 
-	SDL_Surface * surface = SDL_LoadBMP(PATH"textures/pl.bmp");
+	SDL_Surface * surface = SDL_LoadBMP(PATH"textures/player.bmp");
 	if (surface == NULL) throw SDL_Exception();
 
 	glGenTextures(1, &texturePlayer);

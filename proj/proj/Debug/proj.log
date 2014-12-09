@@ -1,14 +1,14 @@
-﻿Build started 9. 12. 2014 1:25:52.
+﻿Build started 9. 12. 2014 11:48:50.
      1>Project "C:\Users\Tereza\Documents\škola\zima 2014\PGR\projekt\PGRprojekt\proj\proj\proj.vcxproj" on node 2 (Build target(s)).
      1>ClCompile:
          C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\CL.exe /c /ZI /nologo /W3 /WX- /sdl /Od /Oy- /D WIN32 /D _DEBUG /D _CONSOLE /D _LIB /D _CRT_SECURE_NO_WARNINGS /D _UNICODE /D UNICODE /Gm /EHsc /RTC1 /MTd /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"Debug\\" /Fd"Debug\vc120.pdb" /Gd /TP /analyze- /errorReport:prompt ..\..\proj.cpp
          proj.cpp
      1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(71): warning C4244: 'initializing' : conversion from 'float' to 'int', possible loss of data
      1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(100): warning C4305: 'initializing' : truncation from 'double' to 'float'
-     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(341): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(345): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(726): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
-     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(736): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(333): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(337): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(718): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
+     1>c:\users\tereza\documents\škola\zima 2014\pgr\projekt\pgrprojekt\proj.cpp(728): warning C4244: '=' : conversion from 'float' to 'int', possible loss of data
          GLM: perspective function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
          GLM: rotate function taking degrees as a parameter is deprecated. #define GLM_FORCE_RADIANS before including GLM headers to remove this message.
        Link:
@@ -19,4 +19,4 @@
 
 Build succeeded.
 
-Time Elapsed 00:00:00.95
+Time Elapsed 00:00:00.98
