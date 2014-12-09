@@ -63,6 +63,7 @@ float speed = startSpeed; // rychlost hry
 
 int level = -1;
 int function = 0; // pohyb hrace
+unsigned timep = 0;
 
 int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
 
@@ -262,14 +263,21 @@ void initLevel()
 	}
 }
 
-
 // animacia behu - running (!blocked)
 // animacia tlacenia (alebo 1 frame) - blocked
 // animacia skakania - !running s x
 // bez animacie / padanie - !running bez x
 void initPlayer(Player p){
-	if (p.running == true && p.blocked == false)//bezi
-		function = 1;
+
+	if (p.running == true && p.blocked == false){//bezi
+		if ((timep % 6 == 0) && (timep / 6 >= 1 )){
+			if (function == 0)
+				function = 1;
+			else
+				function = 0;
+			timep = 0;
+		}
+	}
 	else if (p.running == true && p.blocked == true)//stoji
 		function = 2;
 	else if (p.running == false && p.blocked == false)//pada
@@ -284,6 +292,8 @@ void initPlayer(Player p){
 	glBindBuffer(GL_ARRAY_BUFFER, playerVBO);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(Point), playerVertices);
 }
+
+
 /*
 Funkce nacita data levelu z promenne map
 
@@ -649,6 +659,7 @@ void onWindowRedraw(){
     glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
+	timep++;
 	if (speed == 0)
 		return;
 
@@ -910,6 +921,7 @@ int main(int /*argc*/, char ** /*argv*/){
         /* SDL_Surface * screen = */
 		init(800, 600, 32, 16, 8);
 
+	//	runLoop(100);
 		mainLoop(20); // delay = 20ms => 50fps 
 
     } catch(exception & ex) {
