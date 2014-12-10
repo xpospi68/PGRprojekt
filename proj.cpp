@@ -59,7 +59,7 @@ Player p = {startPosition, 0, true, false, true, 2, 0};
 glm::vec3 startCameraPosition(0, -7.5, -15); 
 glm::vec3 cameraPosition; // pozice kamery
 
-float startSpeed = 0.08f;
+float startSpeed = 0.12f;//0.08f;
 float speed = startSpeed; // rychlost hry
 
 int level = -1; // aktualny level
@@ -189,33 +189,33 @@ void initLevel()
 		tmp = 16 * i;
 		
 		// 24 indicii pro kazdy zaznam (8 trojuhelniku)
-		roomIndicies[j++] = (unsigned short) tmp;
-		roomIndicies[j++] = (unsigned short) tmp + 2;
-		roomIndicies[j++] = (unsigned short) tmp + 1;
-		roomIndicies[j++] = (unsigned short) tmp;
-		roomIndicies[j++] = (unsigned short) tmp + 3;
-		roomIndicies[j++] = (unsigned short) tmp + 2;
+		roomIndicies[j++] =  tmp;
+		roomIndicies[j++] =  tmp + 2;
+		roomIndicies[j++] =  tmp + 1;
+		roomIndicies[j++] =  tmp;
+		roomIndicies[j++] =  tmp + 3;
+		roomIndicies[j++] =  tmp + 2;
 
-		roomIndicies[j++] = (unsigned short) tmp + 4;
-		roomIndicies[j++] = (unsigned short) tmp + 6;
-		roomIndicies[j++] = (unsigned short) tmp + 5;
-		roomIndicies[j++] = (unsigned short) tmp + 4;
-		roomIndicies[j++] = (unsigned short) tmp + 7;
-		roomIndicies[j++] = (unsigned short) tmp + 6;
+		roomIndicies[j++] =  tmp + 4;
+		roomIndicies[j++] =  tmp + 6;
+		roomIndicies[j++] =  tmp + 5;
+		roomIndicies[j++] =  tmp + 4;
+		roomIndicies[j++] =  tmp + 7;
+		roomIndicies[j++] =  tmp + 6;
 
-		roomIndicies[j++] = (unsigned short) tmp + 8;
-		roomIndicies[j++] = (unsigned short) tmp + 10;
-		roomIndicies[j++] = (unsigned short) tmp + 9;
-		roomIndicies[j++] = (unsigned short) tmp + 8;
-		roomIndicies[j++] = (unsigned short) tmp + 11;
-		roomIndicies[j++] = (unsigned short) tmp + 10;
+		roomIndicies[j++] =  tmp + 8;
+		roomIndicies[j++] =  tmp + 10;
+		roomIndicies[j++] =  tmp + 9;
+		roomIndicies[j++] =  tmp + 8;
+		roomIndicies[j++] =  tmp + 11;
+		roomIndicies[j++] =  tmp + 10;
 
-		roomIndicies[j++] = (unsigned short) tmp + 12;
-		roomIndicies[j++] = (unsigned short) tmp + 13;
-		roomIndicies[j++] = (unsigned short) tmp + 14;
-		roomIndicies[j++] = (unsigned short) tmp + 12;
-		roomIndicies[j++] = (unsigned short) tmp + 14;
-		roomIndicies[j++] = (unsigned short) tmp + 15;
+		roomIndicies[j++] =  tmp + 12;
+		roomIndicies[j++] =  tmp + 13;
+		roomIndicies[j++] =  tmp + 14;
+		roomIndicies[j++] =  tmp + 12;
+		roomIndicies[j++] =  tmp + 14;
+		roomIndicies[j++] =  tmp + 15;
 	}
 }
 
@@ -236,7 +236,7 @@ void initPlayer(){
 	}
 	else if (p.running == true && p.blocked == true)//stoji
 		p.function = 0;
-	else if (p.running == false && p.blocked == false)//pada
+	else if (/*p.running == false && */p.blocked == false)//pada
 		p.function = 1;
 	
 	// vrcholy hraca - osovo sumerny koli otacaniu
@@ -259,10 +259,10 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 void loadLevel(int l)
 {
 	int floor, ceiling, floor_last = - 1, ceiling_last = -1;
-	int sideV = 0, sideI = 0;
+	unsigned short sideV = 0, sideI = 0;
 	numberOfSides = 0;
 
-	// cyklus pro kazdy zaznam v souboru
+	// cyklus spro kazdy zaznam v souboru
 	// v kazdem prochodu se vytvori 2 trojuhelniky (obdelnik) pro dolni stenu, 2 pro horni stenu,
 	// 2 pro podlahu a 2 pro strop
 	// sice se takto vytvari vice trojuhelniku nez je nezbytne nutne, ale aspon je to jednoduche
@@ -339,36 +339,36 @@ void loadLevel(int l)
 
 		// vznikl schod => je treba vyrobit jeho stenu, to stejne pak udelat pro strop
 		if ((floor_last != -1) && (floor_last != floor)){			
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = sideV;
 			sideWallsVertices[sideV++] = { { from, 0.0 }, { (float)i, (float)floor, 0.0 } };
 
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = sideV;
 			sideWallsVertices[sideV++] = { { from, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, 0.0 } };
 
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsIndicies[sideI++] = (unsigned short)(sideV-2);
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = sideV;
+			sideWallsIndicies[sideI++] = sideV-2;
+			sideWallsIndicies[sideI++] = sideV;
 			sideWallsVertices[sideV++] = { { to, (float)abs(floor_last - floor) }, { (float)i, (float)floor_last, DEPTH } };
 
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = sideV;
 			sideWallsVertices[sideV++] = { { to, 0.0 }, { (float)i, (float)floor, DEPTH } };
 
 			numberOfSides++;
 		}
 
 		if ((ceiling_last != -1) && (ceiling_last != ceiling)){
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = sideV;
 			sideWallsVertices[sideV++] = { { from, 0.0 }, { (float)i, (float)ceiling, 0.0 } };
 
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = sideV;
 			sideWallsVertices[sideV++] = { { from, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, 0.0 } };
 
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
-			sideWallsIndicies[sideI++] = (unsigned short)(sideV - 2);
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = sideV;
+			sideWallsIndicies[sideI++] = sideV - 2;
+			sideWallsIndicies[sideI++] = sideV;
 			sideWallsVertices[sideV++] = { { to, (float)abs(ceiling_last - ceiling) }, { (float)i, (float)ceiling_last, DEPTH } };
 
-			sideWallsIndicies[sideI++] = (unsigned short)sideV;
+			sideWallsIndicies[sideI++] = sideV;
 			sideWallsVertices[sideV++] = { { to, 0.0 }, { (float)i, (float)ceiling, DEPTH } };
 
 			numberOfSides++;
@@ -448,13 +448,15 @@ void collisionDetection() {
 	cout << ") (" << follow.floor << ", " << follow.ceiling 
 	     << ")"  << endl;
 
+	float tmp = 0.5f - speed;
+
 	//blokovanie v pohybe
-	if ((follow.floor > p.position.y - 0.445 ) || (follow.ceiling < p.position.y + 0.445))
+	if ((follow.floor > p.position.y - tmp) || (follow.ceiling < p.position.y + tmp))
 		p.blocked = true;
 	else
 		p.blocked = false;
 
-	float tmp = 0.5f + speed; // parametricky voci zmene rychlosti
+	tmp = 0.5f + speed; // parametricky voci zmene rychlosti
 
 	// behanie == poda pod nohami, padanie == volny priestor		
 	if (p.gravity && (actual.floor < p.position.y - tmp)) {
@@ -642,6 +644,14 @@ void onWindowRedraw(){
 		level++;
 		
 		if (level == LEVELS) {
+			cameraPosition.x += speed; // stoji na mieste
+		} else {
+			loadLevel(level);
+			speed += 0.01f;
+		}
+	}
+	
+	if ((int)p.position.x >= NUMBER_OF_RECORDS*(LEVELS)) {
 			glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
 
 			glActiveTexture(GL_TEXTURE3);
@@ -666,13 +676,10 @@ void onWindowRedraw(){
 			glVertexAttribPointer(tcAttrib, 2, GL_FLOAT, GL_FALSE, sizeof(Point), (void*)offsetof(Point, texcoord));
 			glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, textEBO);
 			glDrawElements(GL_TRIANGLES, 6 * _text.size(), GL_UNSIGNED_BYTE, NULL);
-
+			
 			speed = 0;
 			p.best = p.position.x;
-		} else {
-			loadLevel(level);
-			speed += 0.01f;
-		}
+
 	}
 	
 	// hra konci, ked vyjde z obrazovky
