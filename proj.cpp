@@ -1,7 +1,7 @@
 /**
 	PGR Projekt: hra01b - Jednoklavesova hra s pouzitim OpenGL
 
-	Datum: 16. 11. 2014
+	Datum: 10. 12. 2014
 
 	Prihlaseni:
 		Sokova Veronika, Bc.	xsokov00@stud.fit.vutbr.cz
@@ -49,23 +49,21 @@ typedef struct {
 	bool running; // indicates if player is true == running, false == falling
 	bool blocked;
 	bool gravity; // true == normal gravity, false == inverted gravity
+	int function; // pohyb hrace
+	unsigned time;	
 } Player;
 
 glm::vec3 startPosition = glm::vec3(0, map[0][0].floor+0.5, -1);
-Player p = {startPosition, 0, true, false, true};
+Player p = {startPosition, 0, true, false, true, 2, 0};
 
 glm::vec3 startCameraPosition(0, -7.5, -15); 
 glm::vec3 cameraPosition; // pozice kamery
 
-
 float startSpeed = 0.08f;
 float speed = startSpeed; // rychlost hry
 
-int level = -1;
-int function = 2; // pohyb hrace
-unsigned timep = 0;
-
-int switching = NUMBER_OF_RECORDS; // PREROBIT ?!
+int level = -1; // aktualny level
+int switching = NUMBER_OF_RECORDS; // buduci bod, kedy prehodit level
 
 // pocet prvkov na vykreslenie sceny
 int numberOfRecords = NUMBER_OF_RECORDS + 2*(-LEFT_BORDER);
@@ -79,7 +77,6 @@ typedef struct {
 // vrcholy pro "mistnost"
 Point * roomVertices  = nullptr;
 Point * sideWallsVertices = nullptr;
-Point * playerVertices = nullptr;
 
 // vrcholy pozadi
 Point backgroundVertices[12] = {
@@ -111,52 +108,15 @@ unsigned char backgroundIndicies[] = {
 // indicie k temto vrcholum
 unsigned short * roomIndicies = nullptr;
 unsigned short * sideWallsIndicies = nullptr;
-/*[] = {
-	0, 2, 1, //s
-	0, 3, 2,
-	4, 6, 5, //c
-	4, 7, 6,
-	8, 10, 9, //o
-	8, 11, 10,
-	12, 14, 13, //r
-	12, 15, 14,
-	16, 18, 17, //e
-	16, 19, 18,
-	20, 22, 21, //:
-	20, 23, 22,
-	24, 26, 25, //s1
-	24, 27, 26, 
-	28, 30, 29, //s2
-	28, 31, 30,
-	32, 34, 33, //s3
-	32, 35, 34,
-	36, 38, 37, //_
-	36, 39, 38,
-	40, 42, 41, //b
-	40, 43, 42,
-	44, 46, 45, //e
-	44, 47, 46,
-	48, 50, 49, //s
-	48, 51, 50,
-	52, 54, 53, //t
-	52, 55, 54,
-	56, 58, 57, //:
-	56, 59, 58,
-	60, 62, 61, //b1
-	60, 63, 62,
-	64, 66, 65, //b2
-	64, 67, 66,
-	68, 70, 69, //b3
-	68, 71, 70
-};*/
 
+// hrac
+Point playerVertices[4];
 unsigned char playerIndicies[] = { 
 	0, 2, 1,
 	0, 3, 2
 };
 
 // pro vypis textu
-int was_here = 0;
 Point * textVertices = nullptr;
 unsigned char *textIndicies = nullptr;
 
@@ -191,11 +151,8 @@ void drawText(string _text, float size, float x, float y)
 		textVertices[4 * i + 3] = { { uv_x + 1.0f / 16.0f, 1.0f - (uv_y + 1.0f / 16.0f) }, { x + i*size + size, y, 0.0 } }; 
 	}
 	//aktualizace vykresleni  
-	if (was_here != 0){
-		glBindBuffer(GL_ARRAY_BUFFER, textVBO);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * MAX_LENGTH_STRING * sizeof(Point), textVertices);
-	}
-	was_here = 1;
+	glBindBuffer(GL_ARRAY_BUFFER, textVBO);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * MAX_LENGTH_STRING * sizeof(Point), textVertices);
 }
 
 // inicializuje poradie elementov textu
@@ -266,30 +223,30 @@ void initLevel()
 // animacia tlacenia (alebo 1 frame) - blocked
 // animacia skakania - !running s x
 // bez animacie / padanie - !running bez x
-void initPlayer(Player p){
+void initPlayer(){
 
 	if (p.running == true && p.blocked == false){//bezi
-		if ((timep % 5 == 0) && (timep / 5 >= 1 )){
-			if (function == 2 || function == 3 || function == 4)
-				function += 1;
+		if ((p.time % 5 == 0) && (p.time / 5 >= 1 )){
+			if (p.function == 2 || p.function == 3 || p.function == 4)
+				p.function += 1;
 			else
-				function = 2;
-			timep = 0;
+				p.function = 2;
+			p.time = 0;
 		}
 	}
 	else if (p.running == true && p.blocked == true)//stoji
-		function = 0;
+		p.function = 0;
 	else if (p.running == false && p.blocked == false)//pada
-		function = 1;
+		p.function = 1;
 	
 	// vrcholy hraca - osovo sumerny koli otacaniu
-	playerVertices[0] = { { 0.125f * function, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } };
-	playerVertices[1] = { { 0.125f * function, 1.0 }, { -1.0, 0.5, PLAYER_DEPTH } };
-	playerVertices[2] = { { 0.125f * function + 0.125f, 1.0 }, { 0.0, 0.5, PLAYER_DEPTH } };
-	playerVertices[3] = { { 0.125f * function + 0.125f, 0.0 }, { 0.0, -0.5, PLAYER_DEPTH } };
+	playerVertices[0] = { { 0.125f * p.function, 0.0 }, { -1.0, -0.5, PLAYER_DEPTH } };
+	playerVertices[1] = { { 0.125f * p.function, 1.0 }, { -1.0, 0.5, PLAYER_DEPTH } };
+	playerVertices[2] = { { 0.125f * p.function + 0.125f, 1.0 }, { 0.0, 0.5, PLAYER_DEPTH } };
+	playerVertices[3] = { { 0.125f * p.function + 0.125f, 0.0 }, { 0.0, -0.5, PLAYER_DEPTH } };
 
 	glBindBuffer(GL_ARRAY_BUFFER, playerVBO);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, 4 * sizeof(Point), playerVertices);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(playerVertices), playerVertices);
 }
 
 
@@ -445,8 +402,6 @@ void freeAll(){
 		delete [] textVertices;
 	if (textIndicies != nullptr)
 		delete [] textIndicies;
-	if (playerVertices != nullptr)
-		delete[] playerVertices;
 }
 
 // zahajenie hry, nastavenie pozicie hraca, kamery a urovne
@@ -573,7 +528,7 @@ void onInit(){
 	// zkopirujem hrace
 	glGenBuffers(1, &playerVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, playerVBO);
-	glBufferData(GL_ARRAY_BUFFER, 4 * sizeof(Point), playerVertices, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(playerVertices), playerVertices, GL_DYNAMIC_DRAW);
 
 	glGenBuffers(1, &playerEBO);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, playerEBO);
@@ -649,8 +604,6 @@ void onInit(){
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_LINEAR);
 	SurfaceImage2D(GL_TEXTURE_2D, 0, GL_RGB, surface3);
 	glGenerateMipmap(GL_TEXTURE_2D);
-
-	playerVertices = new Point[4];
 }
 
 void onWindowRedraw(){
@@ -658,7 +611,7 @@ void onWindowRedraw(){
     glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
 
-	timep++;
+	p.time++;
 	if (speed == 0)
 		return;
 
@@ -728,7 +681,6 @@ void onWindowRedraw(){
 		if (p.position.x > p.best) p.best = p.position.x;
 		initGame();
 	}
-
 	
 	// pohyb kamery => vzdy
 	cameraPosition.x -= speed;
@@ -815,7 +767,7 @@ void onWindowRedraw(){
 	glBindTexture(GL_TEXTURE_2D, texturePlayer);
 	glUniform1i(textureUniform, 0);
 
-	initPlayer(p);
+	initPlayer();
 
 	// vykresleni hrace
 	glBindBuffer(GL_ARRAY_BUFFER, playerVBO);
@@ -847,27 +799,23 @@ void onKeyDown(SDLKey key, Uint16 /*mod*/)
 			if (speed == 0)
 				initGame();
 			break;
-		case SDLK_a: initGame(); break; // just for testing !!!
+//		case SDLK_a: initGame(); break; // just for testing !!!
         default : return;
     }
     redraw();
 }
 
 void onKeyUp(SDLKey /*key*/, Uint16 /*mod*/)
-{
-}
+{}
 
 void onMouseMove(unsigned /*x*/, unsigned /*y*/, int xrel, int yrel, Uint8 buttons)
-{
-}
+{}
 
 void onMouseDown(Uint8 button, unsigned /*x*/, unsigned /*y*/)
-{
-}
+{}
 
 void onMouseUp(Uint8 /*button*/, unsigned /*x*/, unsigned /*y*/)
-{
-}
+{}
 
 ////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
