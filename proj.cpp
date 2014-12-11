@@ -638,7 +638,7 @@ void onWindowRedraw(){
 	glm::mat4 mvp1 = glm::translate(vp, glm::vec3(-cameraPosition.x - 7, 10.5, 2));
 
 	//zmena levelu - zrychlenie
-	if (ceil(-cameraPosition.x) == switching) {// 60, 120, ...
+	if (((int)-cameraPosition.x) == switching) {// 60, 120, ...
 		switching += NUMBER_OF_RECORDS;
 		level++;
 		
