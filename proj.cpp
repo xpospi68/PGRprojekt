@@ -59,7 +59,7 @@ Player p = {startPosition, 0, true, false, true, 2, 0};
 glm::vec3 startCameraPosition(0, -7.5, -15); 
 glm::vec3 cameraPosition; // pozice kamery
 
-float startSpeed = 0.12f;//0.08f;
+float startSpeed = 0.08f;
 float speed = startSpeed; // rychlost hry
 
 int level = -1; // aktualny level
@@ -258,7 +258,7 @@ jsme trochu splnili tu polozku "vyuzijte moznisti openGL" a aby to bylo aspon tr
 */
 void loadLevel(int l)
 {
-	int floor, ceiling, floor_last = - 1, ceiling_last = -1;
+	signed char floor, ceiling, floor_last = - 1, ceiling_last = -1;
 	unsigned short sideV = 0, sideI = 0;
 	numberOfSides = 0;
 
@@ -303,7 +303,7 @@ void loadLevel(int l)
 		}
 		
 		if (j < -LEFT_BORDER && newlevel == l) ik = 0;
-		if (j > NUMBER_OF_RECORDS - LEFT_BORDER && newlevel == l) ik = NUMBER_OF_RECORDS-1;
+		if (j >= NUMBER_OF_RECORDS - LEFT_BORDER && newlevel == l) ik = NUMBER_OF_RECORDS-1;
 			
 		floor = map[newlevel][ik].floor;
 		ceiling = map[newlevel][ik].ceiling;
@@ -439,15 +439,15 @@ void collisionDetection() {
 */
 
 	// mozme si dovolit, lebo data su radene za sebou
-	Column actual = map[0][(int)trunc(p.position.x-0.5)];
+	Column actual = map[0][(int)trunc(p.position.x-0.5f)];
 	Column follow = map[0][(int)ceil(p.position.x-0.99f)];
 
-	cout << "cam-x: "<< cameraPosition.x << ", x: " << p.position.x 
+/*	cout << "cam-x: "<< cameraPosition.x << ", x: " << p.position.x 
 	     << ", y: " << p.position.y << " ("
-	     << actual.floor << ", " << actual.ceiling;
-	cout << ") (" << follow.floor << ", " << follow.ceiling 
+	     << (int)actual.floor << ", " << (int)actual.ceiling;
+	cout << ") (" << (int)follow.floor << ", " << (int)follow.ceiling 
 	     << ")"  << endl;
-
+*/
 	float tmp = 0.5f - speed;
 
 	//blokovanie v pohybe
@@ -500,7 +500,6 @@ GLuint positionAttrib, tcAttrib, mvpUniform, textureUniform;
 
 void onInit(){		
     // Shader
-    cout << SDL_DEFAULT_REPEAT_DELAY << "  "<< SDL_DEFAULT_REPEAT_INTERVAL <<endl;
 	VS = compileShader(GL_VERTEX_SHADER, VSSource);
 	FS = compileShader(GL_FRAGMENT_SHADER, FSSource);
 	Prog = linkShader(2, VS, FS);
@@ -639,7 +638,7 @@ void onWindowRedraw(){
 	glm::mat4 mvp1 = glm::translate(vp, glm::vec3(-cameraPosition.x - 7, 10.5, 2));
 
 	//zmena levelu - zrychlenie
-	if ((int)(-cameraPosition.x) == switching) {// 60, 120, ...
+	if (ceil(-cameraPosition.x) == switching) {// 60, 120, ...
 		switching += NUMBER_OF_RECORDS;
 		level++;
 		
@@ -651,7 +650,7 @@ void onWindowRedraw(){
 		}
 	}
 	
-	if ((int)p.position.x >= NUMBER_OF_RECORDS*(LEVELS)) {
+	if (ceil(p.position.x) >= NUMBER_OF_RECORDS*(LEVELS)) {
 			glUniformMatrix4fv(mvpUniform, 1, GL_FALSE, glm::value_ptr(mvp1));
 
 			glActiveTexture(GL_TEXTURE3);
@@ -679,6 +678,7 @@ void onWindowRedraw(){
 			
 			speed = 0;
 			p.best = p.position.x;
+			p.blocked = true;
 
 	}
 	
@@ -690,6 +690,7 @@ void onWindowRedraw(){
 	}
 	
 	// pohyb kamery => vzdy
+	if (level != LEVELS)
 	cameraPosition.x -= speed;
 	 
     glUseProgram(Prog);
